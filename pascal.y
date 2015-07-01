@@ -7,7 +7,7 @@
 	TreeNode *syntaxTree;
 }
 
-%type <syntaxTree> const_value expression expr factor term  // 常数名 类型 函数名 变量名
+%type <syntaxTree> expression expr factor term  // 常数名 类型 函数名 变量名
 
 %token NAME
 
@@ -40,16 +40,10 @@ label_part:
 const_part: CONST  const_expr_list  |
 ;
 const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
-			SymbolType type = $4->type;
-			SymbolKind kind = Element;
-			TypeNode p = createTypeNode(type, kind, $4->attr.value, sizeOfType[$4->type], NULL);
-			addSymbol($2, p);
+
 		}
 		|  NAME  EQUAL  const_value  SEMI {
-			SymbolType type = $3->type;
-			SymbolKind kind = Element;
-			TypeNode p = createTypeNode(type, kind, $3->attr.value, sizeOfType[$3->type], NULL);
-			addSymbol($1, p);
+
 		}
 ;
 const_value: INTEGER 
@@ -179,9 +173,9 @@ factor: NAME
 	|  SYS_FUNCT
 	|  SYS_FUNCT  LP  args_list  RP  
 	|  const_value  
-	|  LP  expression  RP {$$ = $2;}
-	|  NOT  factor  {$$ = $2;}
-	|  MINUS  factor  {$$ = $2;}
+	|  LP  expression  RP 
+	|  NOT  factor  
+	|  MINUS  factor  
 	|  NAME  LB  expression  RB
 	|  NAME  DOT  NAME
 ;
