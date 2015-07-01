@@ -36,57 +36,57 @@ int isInteger(char *s) {
 %}
 
 dot 		"."
-program		"program"
+program	"program"
 semi		";"
 const		"const"
 equal		"="
 sys_con		"true"|"false"|"maxint"
 type		"type"
-lp			"("
-rp			")"
-lb			"["
-rb			"]"
+lp		"("
+rp		")"
+lb		"["
+rb		"]"
 dotdot		".."
 sys_type	"boolean"|"char"|"integer"|"real"
 array		"array"
-of			"of"
+of		"of"
 record		"record"
-end			"end"
+end		"end"
 comma		","
 colon		":"
 assign		":="
 begin		"begin"
 sys_proc	"write"|"writeln"
 read		"read"
-if			"if"
+if		"if"
 then		"then"
 else		"else"
 repeat		"repeat"
 until		"until"
-for			"for"
-do			"do"
-to			"to"
+for		"for"
+do		"do"
+to		"to"
 downto		"downto"
 case		"case"
 goto		"goto"
-ge			">="
-gt			">"
-le			"<="
-lt			"<"
-unequal		"<>"
+ge		">="
+gt		">"
+le		"<="
+lt		"<"
+unequal	"<>"
 plus		"+"
 minus		"-"
-mul			"*"
-mod			"mod"
-div			"div"
-and			"and"
-or			"or"
+mul		"*"
+mod		"mod"
+div		"div"
+and		"and"
+or		"or"
 sys_funct	"abs"|"chr"|"odd"|"ord"|"pred"|"sqr"|"sqrt"|"succ"
-var			"var"
+var		"var"
 function	"function"
 procedure	"procedure"
 while		"while"
-not			"not"
+not		"not"
 label		"label"
 word		[A-Za-z0-9]+("."[A-Za-z0-9]+)*
 
@@ -116,13 +116,13 @@ word		[A-Za-z0-9]+("."[A-Za-z0-9]+)*
 	else return CHAR;
 }
 
-{dot} { return DOT; }
-{program} { return PROGRAM; }
-{semi} { return SEMI; }
-{const} { name_part = 1; return CONST; }
-{equal} { return EQUAL; }
-{sys_con} { return SYS_CON; }
-{type}	{ name_part = 1; return TYPE;}
+{dot} 		{ return DOT; }
+{program} 	{ return PROGRAM; }
+{semi} 		{ return SEMI; }
+{const} 		{ return CONST; }
+{equal} 	{ return EQUAL; }
+{sys_con} 	{ return SYS_CON; }
+{type}		{ name_part = 1; return TYPE;}
 {lp}		{return LP;}
 {rp}		{return RP;}
 {lb}		{return LB;}
@@ -133,10 +133,10 @@ word		[A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {of}		{return OF;}
 {record}	{return RECORD;}
 {end}		{return END;}
-{comma}		{return COMMA;}
+{comma}	{return COMMA;}
 {colon}		{return COLON;}
 {assign}	{return ASSIGN;}
-{begin}		{name_part = 0; return BEGIN2;}
+{begin}		{name_part = 0; return BEGIN;}
 {sys_proc}	{return SYS_PROC;}
 {read}		{return READ;}
 {if}		{return IF;}
@@ -156,7 +156,7 @@ word		[A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {lt}		{return LT;}
 {unequal}	{return UNEQUAL;}
 {plus}		{return PLUS;}
-{minus}		{return MINUS;}
+{minus}	{return MINUS;}
 {mul}		{return MUL;}
 {mod}		{return MOD;}
 {div}		{return DIV;}
@@ -190,7 +190,7 @@ word		[A-Za-z0-9]+("."[A-Za-z0-9]+)*
 			else {
 				if (hashTable[BKDRhash(yytext)]) return NAME;
 				else {
-					return ID;
+					return NAME;
 				}
 			}
 		}
