@@ -40,6 +40,7 @@ typedef enum {
 typedef enum {
 	VOID, INTEGER, BOOLEAN, REAL, CHARACTER, STRING
 } SymbolType;
+
 typedef enum {
 	CONST_PART, CONST_EXPR_LIST,
 	FUNCTION_DECL, FUNCTION_HEAD, 
