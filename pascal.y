@@ -7,6 +7,7 @@
 	TreeNode *syntaxTree;
 }
 
+%type <syntaxTree> program program_head routine
 %type <syntaxTree> expression expr factor term  // 常数名 类型 函数名 变量名
 
 %token NAME
@@ -24,36 +25,94 @@
 %token SYS_PROC SYS_TYPE READ // see doc
 
 %%
-program: program_head  routine  DOT
+program: program_head  routine  DOT {
+	$$ = createTreeNodeStmt("program");
+	syntaxTreeRoot = $$;
+	$1 = createTreeNodeStmt("program_head");
+	$2 = createTreeNodeStmt("routine");
+	$$->child = $1;
+	$1->sibling = $2;
+}
 ;
 program_head: PROGRAM  NAME  SEMI
 ;
-routine: routine_head  routine_body
+routine: routine_head  routine_body {
+	$1 = createTreeNodeStmt("routine_head");
+	$2 = createTreeNodeStmt("routine_body");
+	$$->child = $1;
+	$1->sibling = $2;
+}
 ;
-sub_routine: routine_head  routine_body
+sub_routine: routine_head  routine_body {
+	$1 = createTreeNodeStmt("routine_head");
+	$2 = createTreeNodeStmt("routine_body");
+	$$->child = $1;
+	$1->sibling = $2;
+}
 ;
 
-routine_head: label_part  const_part  type_part  var_part  routine_part
+routine_head: label_part  const_part  type_part  var_part  routine_part {
+	$1 = createTreeNodeStmt("label_part");
+	$2 = createTreeNodeStmt("const_part");
+	$3 = createTreeNodeStmt("type_part");
+	$4 = createTreeNodeStmt("var_part");
+	$5 = createTreeNodeStmt("routine_part");
+	$$->child = $1;
+	$1->sibling = $2; $2->sibling = $3; $3->sibling = $4; $4->sibling = $5;
+}
 ;
 label_part: 
 ;
-const_part: CONST  const_expr_list  |
-;
+const_part: CONST const_expr_list {
+	$2 = createTreeNodeStmt("const_expr_list");
+	$$->child = $2;
+}
+|;
 const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
-
+			$1 = createTreeNodeStmt("const_expr_list");
+			$4 = createTreeNodeConstant($2);
+			$$->child = $1;
+			$1->sibling = $4;
 		}
 		|  NAME  EQUAL  const_value  SEMI {
-
+			$3 = createTreeNodeConstant($1);
+			$$->child = $3;
 		}
 ;
-const_value: INTEGER 
-			|  REAL  
-			|  CHAR  
-			|  STRING  
-			|  SYS_CON;
+const_value: INTEGER {
+				$$->type = Integer;
+				$$->attr.value.integer = atoi($1);
+			}
+			|  REAL {
+				$$->type = Real;
+				$$->attr.value.real = atof($1);
+			}
+			|  CHAR {
+				$$->type = Character;
+				$$->attr.value.character = $1[0];
+			}  
+			|  STRING {
+				$$->type = String;
+				strcpy($$->attr.value.string, $1);
+			}
+			|  SYS_CON {
+				if (strcmp($1,"false")==0) {
+					$$->type = Boolean;
+					$$-attr.value.boolean = 0;
+				} else if (strcmp($1,"true")==0) {
+					$$->type = Boolean;
+					$$-attr.value.boolean = 1;
+				} else if (strcmp($1,"maxint")==0) {
+					$$->type = Integer;
+					$$-attr.value.integer = INT_MAX;
+				} else {
+					$$->type = Integer;
+					$$-attr.value.integer = 0;
+				}
+			};
 
-type_part: TYPE type_decl_list  |  
-;
+type_part: TYPE type_decl_list  
+|;
 type_decl_list: type_decl_list  type_definition  |  type_definition
 ;
 type_definition: NAME  EQUAL  type_decl  SEMI
@@ -70,6 +129,7 @@ array_type_decl: ARRAY  LB  simple_type_decl  RB  OF  type_decl
 ;
 record_type_decl: RECORD  field_decl_list  END
 ;
+
 field_decl_list: field_decl_list  field_decl  |  field_decl
 ;
 field_decl: name_list  COLON  type_decl  SEMI
@@ -77,16 +137,49 @@ field_decl: name_list  COLON  type_decl  SEMI
 name_list: name_list  COMMA  NAME  
 		|  NAME
 ;
-var_part: VAR  var_decl_list  | 
- ;
-var_decl_list :  var_decl_list  var_decl  |  var_decl
+var_part: VAR  var_decl_list {
+	$2 = createTreeNodeStmt("var_decl_list");
+	$$->child = $2;
+}
+|;
+var_decl_list : var_decl_list  var_decl {
+					$1 = createTreeNodeStmt("var_decl_list");
+			  		$2 = createTreeNodeStmt("var_decl");
+					$$->child = $1;
+					$1->sibling = $2;
+			 	}
+			 	|  var_decl {
+			 		$1 = createTreeNodeStmt("var_decl");
+			 		$$->child = $1;
+			 	}
 ;
-var_decl :  name_list  COLON  type_decl  SEMI
+var_decl :  name_list  COLON  type_decl  SEMI {
+				$1 = createTreeNodeStmt("name_list");
+				$3 = createTreeNodeStmt("type_decl");
+				$$->child = $1;
+				$1->sibling = $3;
+			}
 ;
-routine_part:  routine_part  function_decl  
-		|  routine_part  procedure_decl
-		|  function_decl  
-		|  procedure_decl  
+routine_part: routine_part  function_decl {
+				$1 = createTreeNodeStmt("routine_part");
+				$2 = createTreeNodeStmt("function_decl");
+				$$->child = $1;
+				$1->sibling = $2;
+			}
+		|  routine_part  procedure_decl {
+			$1 = createTreeNodeStmt("routine_part");
+			$2 = createTreeNodeStmt("procedure_decl");
+			$$->child = $1;
+			$1->sibling = $2;
+		}
+		|  function_decl {
+			$1 = createTreeNodeStmt("function_decl");
+			$$->child = $1;
+		}
+		|  procedure_decl {
+			$1 = createTreeNodeStmt("procedure_decl");
+			$$->child = $1;
+		}
 		| ;
 function_decl : function_head  SEMI  sub_routine  SEMI
 ;
