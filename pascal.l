@@ -11,17 +11,6 @@ const int HASH_SEED = 31;
 int hashTable[HASH_SIZE];
 int name_part = 0;
 
-int BKDRhash(char *s)
-{
-	int n = strlen(s);
-	int i;
-	int res = 0;
-	for (i = 0; i<n; ++i) {
-		res = (res*HASH_SEED+s[i])%HASH_SIZE;
-	}
-	return res;
-}
-
 int isInteger(char *s) {
 	int head = 0;
 	if (s[0]=='+' || s[0]=='-') head = 1;

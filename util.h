@@ -6,6 +6,6 @@ int yylex(void);
 void yyerror(char *s);
 TreeNode *createTreeNodeStmt(char*);
 TreeNode *createTreeNodeConstant();
-TreeNode *createTreeNodeExp();
 TreeNode *createTreeNodeExp(ExpKind, char*, OpType, SymbolType, int);
+SymbolNode *lookup(char*);
 #endif

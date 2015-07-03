@@ -1,9 +1,24 @@
-#include "global.h"
 #include "util.h"
 
 void yyerror(char *s)
 {
 	fprintf(stderr, "%s\n", s);
+}
+
+SymbolNode *lookup(char *idName)
+{
+
+}
+
+int BKDRhash(char *s)
+{
+	int n = strlen(s);
+	int i;
+	int res = 0;
+	for (i = 0; i<n; ++i) {
+		res = (res*HASH_SEED+s[i])%HASH_SIZE;
+	}
+	return res;
 }
 
 TreeNode *createTreeNodeStmt(StmtType stmtType)
