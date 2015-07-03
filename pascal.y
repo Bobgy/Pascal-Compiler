@@ -32,7 +32,7 @@ program: program_head  routine  DOT {
 	$1->sibling = $2;
 }
 ;
-program_head: PROGRAM  NAME  SEMI
+program_head: PROGRAM  NAME  SEMI // just skipped
 ;
 routine: routine_head  routine_body {
 	$$ = createTreeNodeStmt(ROUTINE);
@@ -53,7 +53,7 @@ routine_head: label_part  const_part  type_part  var_part  routine_part {
 	$1->sibling = $2; $2->sibling = $3; $3->sibling = $4; $4->sibling = $5;
 }
 ;
-label_part: 
+label_part: // just skipped
 ;
 const_part: CONST const_expr_list {
 	$$ = createTreeNodeStmt(CONST_PART);
@@ -127,27 +127,79 @@ type_decl_list: type_decl_list  type_definition {
 					$$->child = $1;
 				}
 ;
-type_definition: NAME  EQUAL  type_decl  SEMI
+type_definition: NAME  EQUAL  type_decl  SEMI {
+					$$ = createTreeNodeStmt(TYPE_DEFINITION);
+					$$->attr.symbolName = (char*)malloc(sizeof($1));
+					strcpy($$->attr.symbolName, $1);
+					// store typename in type_definition node
+				}
 ;
-type_decl: simple_type_decl  |  array_type_decl  |  record_type_decl
+type_decl:  simple_type_decl {
+				$$ = createTreeNodeStmt(TYPE_DECL);
+				$$->child = $1;
+			}
+			|  array_type_decl {
+				$$ = createTreeNodeStmt(TYPE_DECL);
+				$$->child = $1;
+			}
+			|  record_type_decl {
+				$$ = createTreeNodeStmt(TYPE_DECL);
+				$$->child = $1;
+			}
 ;
-simple_type_decl: SYS_TYPE  |  NAME  |  LP  name_list  RP  
-		|  const_value  DOTDOT  const_value  
-		|  MINUS  const_value  DOTDOT  const_value
-		|  MINUS  const_value  DOTDOT  MINUS  const_value
-		|  NAME  DOTDOT  NAME
+simple_type_decl: SYS_TYPE // "boolean", "char", "integer", "real"
+				{
+					$$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
+					$$->attr.symbolName = (char*)malloc(sizeof($1));
+					strcpy($$->attr.symbolName, $1);
+					// store type name in node
+				}
+				|  NAME 
+				|  LP  name_list  RP  
+				|  const_value  DOTDOT  const_value {  // just need this to pass test
+					$$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
+					$$->child = $1;
+					$1->sibling = $3;
+				}
+				|  MINUS  const_value  DOTDOT  const_value
+				|  MINUS  const_value  DOTDOT  MINUS  const_value
+				|  NAME  DOTDOT  NAME
 ;
-array_type_decl: ARRAY  LB  simple_type_decl  RB  OF  type_decl
+array_type_decl: ARRAY  LB  simple_type_decl  RB  OF  type_decl {
+					$$ = createTreeNodeStmt(ARRAY_TYPE_DECL);
+					$$->child = $1;
+					$1->sibling = $2;
+				}
 ;
-record_type_decl: RECORD  field_decl_list  END
+record_type_decl: RECORD  field_decl_list  END {
+					$$ = createTreeNodeStmt(RECORD_TYPE_DECL);
+					$$->child = $2;
+				}
 ;
 
-field_decl_list: field_decl_list  field_decl  |  field_decl
+field_decl_list: field_decl_list  field_decl {
+					$$ = createTreeNodeStmt(FIELD_DECL_LIST);
+					$$->child = $1;
+					$1->sibling = $2;
+				}
+				| field_decl {
+					$$ = createTreeNodeStmt(FIELD_DECL_LIST);
+					$$->child = $1;
+				}
 ;
-field_decl: name_list  COLON  type_decl  SEMI
+field_decl: name_list  COLON  type_decl  SEMI {
+				$$ = createTreeNodeStmt(FIELD_DECL);
+				$$->child = $1;
+				$1->sibling = $3;
+			}
 ;
-name_list: name_list  COMMA  NAME  
-		|  NAME
+name_list: name_list  COMMA  NAME {
+			$$ = createTreeNodeStmt(NAME_LIST);
+			$$->child = $1;
+		}  
+		|  NAME {
+			$$ = createTreeNodeStmt(NAME_LIST);
+		}
 ;
 var_part: VAR  var_decl_list {
 	$$ = createTreeNodeStmt(VAR_PART);
@@ -234,63 +286,185 @@ para_type_list: var_para_list COLON  simple_type_decl {
 					$1->sibling = $3;
 				}  
 ;
-var_para_list: VAR name_list {
-					
+var_para_list: VAR name_list { // pass by reference
+					$$ = createTreeNodeStmt(VAR_PARA_LIST);
+					$$->child = $2;
 				};
-val_para_list: name_list
+				| name_list { // pass by value
+					$$ = createTreeNodeStmt(VAR_PARA_LIST);
+					$$->child = $1;
+				}
 ;
-routine_body: compound_stmt
+routine_body: compound_stmt {
+				$$ = createTreeNodeStmt(ROUTINE_BODY);
+				$$->child = $1;
+			}
 ;
-compound_stmt: BEGIN  stmt_list  END
+compound_stmt: BEGIN  stmt_list  END {
+					$$ = createTreeNodeStmt(COMPOUND_STMT);
+					$$->child = $2;
+				}
 ;
-stmt_list: stmt_list  stmt  SEMI  |  
+stmt_list: stmt_list  stmt  SEMI {
+				$$ = createTreeNodeStmt(STMT_LIST);
+				$$->child = $1;
+				$1->sibling = $2;
+			}
+|;
+stmt: INTEGER  COLON non_label_stmt {
+		$$ = createTreeNodeStmt(STMT);
+		$$->child = $3;
+	}
+	|  non_label_stmt {
+		$$ = createTreeNodeStmt(STMT);
+		$$->child = $1;	
+	}
 ;
-stmt: INTEGER  COLON non_label_stmt  
-	|  non_label_stmt
+non_label_stmt: assign_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| proc_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| compound_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| if_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| repeat_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| while_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| for_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| case_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
+				| goto_stmt {
+					$$ = createTreeNodeStmt(NON_LABEL_STMT);
+					$$->child = $1;
+				}
 ;
-non_label_stmt: assign_stmt | proc_stmt | compound_stmt | if_stmt | repeat_stmt | while_stmt 
-| for_stmt | case_stmt | goto_stmt
+assign_stmt: NAME  ASSIGN  expression {
+				$$ = createTreeNodeStmt(ASSIGN_STMT);
+				$$->child = $3;
+			}
+           | NAME LB expression RB ASSIGN expression {
+				$$ = createTreeNodeStmt(ASSIGN_STMT);
+				$$->child = $3;
+				$$->sibling = $5;
+			}
+           | NAME  DOT  NAME  ASSIGN  expression {
+           		$$ = createTreeNodeStmt(ASSIGN_STMT);
+				$$->child = $5;
+           }
 ;
-assign_stmt: NAME  ASSIGN  expression
-           | NAME LB expression RB ASSIGN expression
-           | NAME  DOT  NAME  ASSIGN  expression
+proc_stmt: 	NAME {
+				$$ = createTreeNodeStmt(PROC_STMT);
+			}
+          	|  NAME  LP  args_list  RP {
+				$$ = createTreeNodeStmt(PROC_STMT);
+				$$->child = $3;
+			}
+         	|  SYS_PROC { // just skipped
+			}
+          	|  SYS_PROC  LP  expression_list  RP { // only need to consider writeln()
+				$$ = createTreeNodeStmt(PROC_STMT);
+				$$->child = $3;
+			}
+          	|  READ  LP  factor  RP {
+				$$ = createTreeNodeStmt(PROC_STMT);
+				$$->child = $3;
+			}
 ;
-proc_stmt: NAME
-          |  NAME  LP  args_list  RP
-          |  SYS_PROC
-          |  SYS_PROC  LP  expression_list  RP
-          |  READ  LP  factor  RP
+if_stmt: IF  expression  THEN  stmt  else_clause {
+			$$ = createTreeNodeStmt(IF_STMT);
+			$$->child = $2;
+			$2->sibling = $4; $4->sibling = $5;
+		};
+else_clause: ELSE stmt {
+				$$ = createTreeNodeStmt(ELSE_CALUSE);
+				$$->child = $2;
+			}
+|;
+repeat_stmt: REPEAT  stmt_list  UNTIL  expression {
+				$$ = createTreeNodeStmt(REPEAT_STMT);
+				$$->child = $2;
+				$2->sibling = $4;
+			};
+while_stmt: WHILE  expression  DO stmt {
+				$$ = createTreeNodeStmt(WHILE_STMT);
+				$$->child = $2;
+			};
+for_stmt: 	FOR  NAME  ASSIGN  expression  direction  expression  DO stmt {
+				$$ = createTreeNodeStmt(FOR_STMT);
+				$$->child = $4;
+				$4->sibling = $5; $5->sibling = $6; $6->sibling = $8;
+			};
+direction: 	TO {
+				$$ = createTreeNodeStmt(DIRECTION);
+			}
+		  	| DOWNTO {
+		  		$$ = createTreeNodeStmt(DIRECTION);
+		  	}
 ;
-if_stmt: IF  expression  THEN  stmt  else_clause
+case_stmt: 	CASE expression OF case_expr_list  END {
+				$$ = createTreeNodeStmt(CASE_STMT);
+				$$->child = $2;
+				$2->sibling = $4;
+			};
+case_expr_list: case_expr_list  case_expr {
+					$$ = createTreeNodeStmt(CASE_EXPR_LIST);
+					$$->child = $1;
+					$1->sibling = $2;
+				}
+				| case_expr {
+					$$ = createTreeNodeStmt(CASE_EXPR_LIST);
+					$$->child = $1;
+				}
 ;
-else_clause: ELSE stmt | 
+case_expr: 	const_value  COLON  stmt  SEMI {
+				$$ = createTreeNodeStmt(CASE_EXPR);
+				$$->child = $1;
+				$1->sibling = $3; $3->sibling = $4;
+			}
+          	|  NAME  COLON  stmt  SEMI {
+          		$$ = createTreeNodeStmt(CASE_EXPR);
+				$$->child = $3;
+          	}
 ;
-repeat_stmt: REPEAT  stmt_list  UNTIL  expression
+goto_stmt: GOTO  INTEGER // just skipped
 ;
-while_stmt: WHILE  expression  DO stmt
-;
-for_stmt: FOR  NAME  ASSIGN  expression  direction  expression  DO stmt
-;
-direction: TO | DOWNTO
-;
-case_stmt: CASE expression OF case_expr_list  END
-;
-case_expr_list: case_expr_list  case_expr  |  case_expr
-;
-case_expr: const_value  COLON  stmt  SEMI
-          |  NAME  COLON  stmt  SEMI
-;
-goto_stmt: GOTO  INTEGER
-;
-expression_list: expression_list  COMMA  expression  |  expression
-;
-expression: expression  GE  expr  
-		|  expression  GT  expr 
-		|  expression  LE  expr
-		|  expression  LT  expr  
-		|  expression  EQUAL  expr  
-		|  expression  UNEQUAL  expr  
-		|  expr
+expression_list: expression_list  COMMA  expression {
+					$$ = createTreeNodeStmt(EXPRESSION_LIST);
+					$$->child = $1;
+					$1->sibling = $3;
+				}
+				| expression {
+					$$ = createTreeNodeStmt(EXPRESSION_LIST);
+					$$->child = $1;
+				};
+expression: expression  GE  expr {
+
+			} 
+			|  expression  GT  expr 
+			|  expression  LE  expr
+			|  expression  LT  expr  
+			|  expression  EQUAL  expr  
+			|  expression  UNEQUAL  expr  
+			|  expr
 ;
 expr: expr  PLUS  term  |  expr  MINUS  term  |  expr  OR  term  |  term
 ;
@@ -311,12 +485,15 @@ factor: NAME
 	|  NAME  LB  expression  RB
 	|  NAME  DOT  NAME
 ;
-args_list: args_list  COMMA  expression  {
-
-	}
-	|  expression {
-		
-	}
+args_list: 	args_list  COMMA  expression  {
+				$$ = createTreeNodeStmt(ARGS_LIST);
+				$$->child = $1;
+				$1->sibling = $3;
+			}
+			|  expression {
+				$$ = createTreeNodeStmt(ARGS_LIST);
+				$$->child = $1;
+			}
 }
 ;
 

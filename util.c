@@ -31,4 +31,3 @@ TreeNode *createTreeNodeConstant()
 	p->child = p->sibling = NULL;
 	return p;
 }
-
