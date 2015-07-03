@@ -2,6 +2,15 @@
 *.output
 *.out
 *.o
+
+# vim
+*.swp
+
+# intermidiate files of clang and llvm
+*.bc
+*.ll
+*.s
+
 lex.yy.c
 y.tab.c
 y.tab.h
