@@ -1,6 +1,7 @@
 %{
 #include "global.h"
 #include "util.h"
+Expression NULL_EXP;
 %}
 
 %token NAME
@@ -10,8 +11,9 @@
 %token PLUS MINUS MUL MOD DIV OR AND NOT
 
 // 保留字
-%token PROGRAM TYPE OF RECORD CONST BEGIN END FUNCTION PROCEDURE ARRAY
+%token PROGRAM TYPE OF RECORD CONST BEGIN_TOKEN END FUNCTION PROCEDURE ARRAY
 %token IF THEN ELSE REPEAT UNTIL FOR DO TO DOWNTO CASE GOTO WHILE LABEL VAR
+%token INTEGER REAL CHAR STRING SYS_CON SYS_FUNCT
 
 %token COLON COMMA SEMI DOTDOT
 
@@ -54,54 +56,54 @@ const_part: CONST const_expr_list {
 }
 |;
 const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
-            $4->attr.symbolName = (char*)malloc(sizeof($2));
-            strcpy(p->attr.symbolName, $2);
+            $4->attr.symbolName = (char*)malloc(strlen($2->attr.symbolName)+1);
+            strcpy($4->attr.symbolName, $2->attr.symbolName);
             $$ = createTreeNodeStmt(CONST_EXPR_LIST);
             $$->child = $1;
             $1->sibling = $4;
         }
         |  NAME  EQUAL  const_value  SEMI {
-            $3->attr.symbolName = (char*)malloc(sizeof($1));
-            strcpy(p->attr.symbolName, $1);
+            $3->attr.symbolName = (char*)malloc(strlen($1->attr.symbolName)+1);
+            strcpy($3->attr.symbolName, $1->attr.symbolName);
             $$ = createTreeNodeStmt(CONST_EXPR_LIST);
             $$->child = $3;
         }
 ;
 const_value: INTEGER {
                 $$ = createTreeNodeConstant();
-                $$->type = INTEGER;
-                $$->attr.value.integer = atoi($1);
+                $$->symbolType = INTEGER;
+                $$->attr.value.integer = atoi($1->attr.symbolName);
             }
             |  REAL {
                 $$ = createTreeNodeConstant();
-                $$->type = REAL;
-                $$->attr.value.real = atof($1);
+                $$->symbolType = REAL;
+                $$->attr.value.real = atof($1->attr.symbolName);
             }
             |  CHAR {
                 $$ = createTreeNodeConstant();
-                $$->type = CHARACTER;
-                $$->attr.value.character = $1[0];
+                $$->symbolType = CHARACTER;
+                $$->attr.value.character = $1->attr.symbolName[0];
             }
             |  STRING {
                 $$ = createTreeNodeConstant();
-                $$->type = STRING;
-                $$->attr.value.string = (char*)malloc(sizeof($1));
-                strcpy($$->attr.value.string, $1);
+                $$->symbolType = STRING;
+                $$->attr.value.string = (char*)malloc(strlen($1->attr.symbolName)+1);
+                strcpy($$->attr.value.string, $1->attr.symbolName);
             }
             |  SYS_CON {
                 $$ = createTreeNodeConstant();
-                if (strcmp($1,"false")==0) {
-                    $$->type = BOOLEAN;
-                    $$-attr.value.boolean = 0;
-                } else if (strcmp($1,"true")==0) {
-                    $$->type = BOOLEAN;
-                    $$-attr.value.boolean = 1;
-                } else if (strcmp($1,"maxint")==0) {
-                    $$->type = INTEGER;
-                    $$-attr.value.integer = INT_MAX;
+                if (strcmp($1->attr.symbolName,"false")==0) {
+                    $$->symbolType = BOOLEAN;
+                    $$->attr.value.boolean = 0;
+                } else if (strcmp($1->attr.symbolName,"true")==0) {
+                    $$->symbolType = BOOLEAN;
+                    $$->attr.value.boolean = 1;
+                } else if (strcmp($1->attr.symbolName,"maxint")==0) {
+                    $$->symbolType = INTEGER;
+                    $$->attr.value.integer = INT_MAX;
                 } else {
-                    $$->type = INTEGER;
-                    $$-attr.value.integer = 0;
+                    $$->symbolType = INTEGER;
+                    $$->attr.value.integer = 0;
                 }
             };
 
@@ -122,8 +124,8 @@ type_decl_list: type_decl_list  type_definition {
 ;
 type_definition: NAME  EQUAL  type_decl  SEMI {
                     $$ = createTreeNodeStmt(TYPE_DEFINITION);
-                    $$->attr.symbolName = (char*)malloc(sizeof($1));
-                    strcpy($$->attr.symbolName, $1);
+                    $$->attr.symbolName = (char*)malloc(strlen($1->attr.symbolName)+1);
+                    strcpy($$->attr.symbolName, $1->attr.symbolName);
                     // store typename in type_definition node
                 }
 ;
@@ -143,8 +145,8 @@ type_decl:  simple_type_decl {
 simple_type_decl: SYS_TYPE // "boolean", "char", "integer", "real"
                 {
                     $$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
-                    $$->attr.symbolName = (char*)malloc(sizeof($1));
-                    strcpy($$->attr.symbolName, $1);
+                    $$->attr.symbolName = (char*)malloc(strlen($1->attr.symbolName)+1);
+                    strcpy($$->attr.symbolName, $1->attr.symbolName);
                     // store type name in node
                 }
                 |  NAME
@@ -241,21 +243,21 @@ function_decl : function_head  SEMI  sub_routine  SEMI {
                 };
 function_head :  FUNCTION  NAME  parameters  COLON  simple_type_decl {
                     $$ = createTreeNodeStmt(FUNCTION_HEAD);
-                    $$->attr.symbolName = (char*)malloc(sizeof($2));
-                    strcpy($$->attr.symbolName, $2);
+                    $$->attr.symbolName = (char*)malloc(strlen($2->attr.symbolName)+1);
+                    strcpy($$->attr.symbolName, $2->attr.symbolName);
                     // function_head saved the name of function
                     $$->child = $3;
                     $3->sibling = $5;
                 };
-procedure_decl :  procedure_head  SEMI  sub_routine  SEMI
+procedure_decl :  procedure_head  SEMI  sub_routine  SEMI {
                     $$ = createTreeNodeStmt(PROCEDURE_DECL);
                     $$->child = $1;
                     $1->sibling = $3;
                 };
-procedure_head :  PROCEDURE NAME parameters
+procedure_head :  PROCEDURE NAME parameters {
                     $$ = createTreeNodeStmt(PROCEDURE_HEAD);
-                    $$->attr.symbolName = (char*)malloc(sizeof($2));
-                    strcpy($$->attr.symbolName, $2);
+                    $$->attr.symbolName = (char*)malloc(strlen($2->attr.symbolName)+1);
+                    strcpy($$->attr.symbolName, $2->attr.symbolName);
                     // procedure_head saved the name of function
                     $$->child = $3;
                 };
@@ -293,7 +295,7 @@ routine_body: compound_stmt {
                 $$->child = $1;
             }
 ;
-compound_stmt: BEGIN  stmt_list  END {
+compound_stmt: BEGIN_TOKEN  stmt_list  END {
                     $$ = createTreeNodeStmt(COMPOUND_STMT);
                     $$->child = $2;
                 }
@@ -454,32 +456,32 @@ expression_list: expression_list  COMMA  expression {
                     $$->child = $1;
                 };
 expression: expression  GE  expr {
-                $$ = createTreeNodeExp(OPKIND,"",GE);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",GE
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  GT  expr {
-                $$ = createTreeNodeExp(OPKIND,"",GT);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",GT
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  LE  expr {
-                $$ = createTreeNodeExp(OPKIND,"",LE);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",LE
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  LT  expr {
-                $$ = createTreeNodeExp(OPKIND,"",LT);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",LT
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  EQUAL  expr {
-                $$ = createTreeNodeExp(OPKIND,"",EQUAL);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",EQUAL
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  UNEQUAL  expr {
-                $$ = createTreeNodeExp(OPKIND,"",UNEQUAL);
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",UNEQUAL
                 $$->child = $1;
                 $1->sibling = $3;
             }
@@ -488,17 +490,17 @@ expression: expression  GE  expr {
             }
 ;
 expr: expr  PLUS  term {
-        $$ = createTreeNodeExp(OPKIND,"",PLUS);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",PLUS
         $$->child = $1;
         $1->sibling = $3;
     }
     |  expr  MINUS  term {
-        $$ = createTreeNodeExp(OPKIND,"",MINUS);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MINUS
         $$->child = $1;
         $1->sibling = $3;
     }
     |  expr  OR  term {
-        $$ = createTreeNodeExp(OPKIND,"",OR);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OR
         $$->child = $1;
         $1->sibling = $3;
     }
@@ -507,22 +509,22 @@ expr: expr  PLUS  term {
     }
 ;
 term: term  MUL  factor {
-        $$ = createTreeNodeExp(OPKIND,"",MUL);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MUL
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  DIV  factor {
-        $$ = createTreeNodeExp(OPKIND,"",DIV);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",DIV
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  MOD  factor {
-        $$ = createTreeNodeExp(OPKIND,"",MOD);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MOD
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  AND  factor {
-        $$ = createTreeNodeExp(OPKIND,"",AND);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",AND
         $$->child = $1;
         $1->sibling = $3;
     }
@@ -531,18 +533,18 @@ term: term  MUL  factor {
     }
 ;
 factor: NAME {
-        $$ = lookup($1)->treeNode;
+        $$ = lookup($1->attr.symbolName)->treeNode;
     }
     |  NAME  LP  args_list  RP {
-        TreeNode *p = lookup($1);
-        $$ = createTreeNodeExp(p->treeNode->kind.expKind,$1,0,p->treeNode->symbolType,p->treeNode->attr.size);
+        TreeNode *p = lookup($1->attr.symbolName)->treeNode;
+        $$ = createTreeNodeExp(NULL_EXP); //p->treeNode->kind.expKind,$1,0,p->treeNode->symbolType,p->treeNode->attr.size
         $$->child = $3;
     }
     |  SYS_FUNCT { //"abs", "chr", "odd", "ord", "pred", "sqr", "sqrt", "succ"
-        $$ = createTreeNodeExp(FUNCKIND,$1,0,INTEGER);
+        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,INTEGER
     }
     |  SYS_FUNCT  LP  args_list  RP {
-        $$ = createTreeNodeExp(FUNCKIND,$1,0,INTEGER);
+        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,INTEGER
         $$->child = $3;
     }
     |  const_value {
@@ -552,18 +554,18 @@ factor: NAME {
         $$ = $2;
     }
     |  NOT  factor {
-        $$ = createTreeNodeExp(OPKIND,"",NOT);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",NOT
         $$->child = $2;
     }
     |  MINUS  factor {
-        $$ = createTreeNodeExp(OPKIND,"",MINUS);
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MINUS
         $$->child = $2;
     }
     |  NAME  LB  expression  RB {
     }
     |  NAME  DOT  NAME {
-        $$ = createTreeNodeExp(OPKIND,"",DOT);
-        memcpy($$->child,lookup($1),sizeof(TreeNode));
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",DOT
+        memcpy($$->child,lookup($1->attr.symbolName),sizeof(TreeNode));
     }
 ;
 args_list:     args_list  COMMA  expression {

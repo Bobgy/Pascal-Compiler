@@ -121,7 +121,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {comma}    {return COMMA;}
 {colon}        {return COLON;}
 {assign}    {return ASSIGN;}
-{begin}        {name_part = 0; return BEGIN;}
+{begin}        {name_part = 0; return BEGIN_TOKEN;}
 {sys_proc}    {return SYS_PROC;}
 {read}        {return READ;}
 {if}        {return IF;}
@@ -168,16 +168,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             }
         }
         if (noDot) {
-            if (name_part) {
-                hashTable[BKDRhash(yytext)] = 1;
-                return NAME;
-            }
-            else {
-                if (hashTable[BKDRhash(yytext)]) return NAME;
-                else {
-                    return NAME;
-                }
-            }
+			return NAME;
         }
     }
     else { //integer real

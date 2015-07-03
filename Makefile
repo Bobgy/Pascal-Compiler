@@ -1,10 +1,10 @@
 LEX_TARGET := lex.yy
 YACC_TARGET := y.tab
 
-all: $(YACC_TARGET).out utils/$(LEX_TARGET).out
+all: $(YACC_TARGET).out
 
-$(YACC_TARGET).out: $(LEX_TARGET).o $(YACC_TARGET).o
-	gcc -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o
+$(YACC_TARGET).out: $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o
+	gcc -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o
 
 $(LEX_TARGET).c: pascal.l
 	flex pascal.l
@@ -12,11 +12,17 @@ $(LEX_TARGET).c: pascal.l
 $(LEX_TARGET).o: $(LEX_TARGET).c $(YACC_TARGET).c $(YACC_TARGET).h
 	gcc -c $(LEX_TARGET).c
 
-$(YACC_TARGET).c $(YACC_TARGET).h: pascal.y
+$(YACC_TARGET).c $(YACC_TARGET).h: pascal.y util.h
 	yacc -dvt pascal.y
 
 $(YACC_TARGET).o: $(YACC_TARGET).c $(YACC_TARGET).h
 	gcc -c $(YACC_TARGET).c
+
+util.o: util.c util.h
+	gcc -c util.c
+
+main.o: main.c global.h
+	gcc -c main.c
 
 clean_o:
 	rm -rf *.o
