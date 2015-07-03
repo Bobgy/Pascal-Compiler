@@ -1,29 +1,42 @@
-all: y.tab.out test_lex
+LEX_TARGET := lex.yy
+YACC_TARGET := y.tab
 
-y.tab.out: 	lex.yy.o 	y.tab.o
-	gcc -o y.tab.out lex.yy.o y.tab.o
+all: $(YACC_TARGET).out utils/$(LEX_TARGET).out
 
-lex.yy.c: 	pascal.l 
+$(YACC_TARGET).out: $(LEX_TARGET).o $(YACC_TARGET).o
+	gcc -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o
+
+$(LEX_TARGET).c: pascal.l
 	flex pascal.l
 
-lex.yy.o: 	lex.yy.c 	y.tab
-	gcc -c lex.yy.c
+$(LEX_TARGET).o: $(LEX_TARGET).c $(YACC_TARGET).c $(YACC_TARGET).h
+	gcc -c $(LEX_TARGET).c
 
-y.tab: 		pascal.y
+$(YACC_TARGET).c $(YACC_TARGET).h: pascal.y
 	yacc -dvt pascal.y
 
-y.tab.o: 	y.tab 		lex.yy.h
-	gcc -c y.tab.c
+$(YACC_TARGET).o: $(YACC_TARGET).c $(YACC_TARGET).h
+	gcc -c $(YACC_TARGET).c
 
 clean_o:
 	rm -rf *.o
 
-clean:
-	rm -rf *.o y.tab.c lex.yy.c *~ *.output y.tab.h *.out
+clean_tmp:
+	rm -rf *~ *.swp *.output
 
-test_lex: lex.yy.o tools/test_lex.c
-	gcc -c tools/test_lex.c
-	gcc test_lex.o lex.yy.o -o tools/lex.yy.out
+clean_exe:
+	rm -rf *.out
 
-test:
-	tools/lex.yy.out < sample/test.pas | tools/token.py ./y.tab.h
+clean_gen_src:
+	rm -rf $(YACC_TARGET).c $(LEX_TARGET).c $(YACC_TARGET).h
+
+clean: clean_tmp clean_o clean_exe clean_gen_src
+
+clean_not_src: clean_tmp clean_o clean_exe
+
+utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c
+	gcc -c utils/test_lex.c
+	gcc test_lex.o $(LEX_TARGET).o -o utils/$(LEX_TARGET).out
+
+test: utils/$(LEX_TARGET).out
+	tools/$(LEX_TARGET).out < test/test.pas | utils/token.py ./$(YACC_TARGET).h
