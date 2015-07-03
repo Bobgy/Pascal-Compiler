@@ -25,16 +25,16 @@ main.o: main.c global.h
 	gcc -c main.c
 
 clean_o:
-	rm -rf *.o
+	rm -f *.o
 
 clean_tmp:
-	rm -rf *~ *.swp *.output
+	rm -f *~ *.swp *.output
 
 clean_exe:
-	rm -rf *.out
+	rm -f *.out
 
 clean_gen_src:
-	rm -rf $(YACC_TARGET).c $(LEX_TARGET).c $(YACC_TARGET).h
+	rm -f $(YACC_TARGET).c $(LEX_TARGET).c $(YACC_TARGET).h
 
 clean: clean_tmp clean_o clean_exe clean_gen_src
 
