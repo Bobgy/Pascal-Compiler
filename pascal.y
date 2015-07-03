@@ -112,9 +112,21 @@ const_value: INTEGER {
 				}
 			};
 
-type_part: TYPE type_decl_list  
+type_part: TYPE type_decl_list {
+				$2 = createTreeNodeStmt(TYPE_DECL_LIST);
+				$$->child = $2;
+			}
 |;
-type_decl_list: type_decl_list  type_definition  |  type_definition
+type_decl_list: type_decl_list  type_definition {
+					$1 = createTreeNodeStmt(TYPE_DECL_LIST);
+					$2 = createTreeNodeStmt(TYPE_DEFINITION);
+					$$->child = $1;
+					$1->sibling = $2;
+				}
+				| type_definition {
+					$1 = createTreeNodeStmt(TYPE_DEFINITION);
+					$$->child = $1;
+				}
 ;
 type_definition: NAME  EQUAL  type_decl  SEMI
 ;
