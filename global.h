@@ -10,11 +10,6 @@
 int yylex();
 int yyparse();
 
-#define SYMBOL_TABLE_SIZE 1000007
-#define HASH_SEED 31;
-
-extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
-
 typedef enum {Element, Array, Function, Constant} SymbolKind;
 typedef union {
 	int integer;
@@ -24,15 +19,8 @@ typedef union {
 	char *string;
 } SymbolValue;
 
-// symbol table element
-struct symbolNode {
-	char* symbolName;
-	size_t address; // store runtime address
-	TreeNode *treeNode; // id on tree
-} SymbolNode;
-
 // Syntax Tree
-typedef enum {STMT,EXP} NodeKind;
+typedef enum {STMTKIND,EXPKIND} NodeKind;
 typedef enum {
 	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND
 } ExpKind;
@@ -64,8 +52,8 @@ typedef enum {
 } StmtType;
 
 typedef struct treeNode {
-	TreeNode *child; // for exp
-	TreeNode *sibling; // for stmt
+	struct treeNode *child; // for exp
+	struct treeNode *sibling; // for stmt
 	NodeKind nodeKind; // StmtK, ExpK
 	union {
 		StmtType stmtType;
@@ -81,5 +69,16 @@ typedef struct treeNode {
 } TreeNode;
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
+
+// symbol table
+#define SYMBOL_TABLE_SIZE 1000007
+#define HASH_SEED 31;
+typedef struct symbolNode {
+	char* symbolName;
+	size_t address; // store runtime address
+	TreeNode *treeNode; // id on tree
+} SymbolNode;
+
+extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 
 #endif

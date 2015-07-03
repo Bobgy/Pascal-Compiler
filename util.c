@@ -43,7 +43,7 @@ TreeNode *createTreeNodeStmt(StmtType stmtType)
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
 	}
-	p->nodeKind = STMT;
+	p->nodeKind = STMTKIND;
 	p->kind.stmtType = stmtType;
 	p->child = p->sibling = NULL;
 	return p;
@@ -56,13 +56,13 @@ TreeNode *createTreeNodeConstant()
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
 	}
-	p->nodeKind = EXP;
+	p->nodeKind = EXPKIND;
 	p->kind.expKind = CONSTKIND;
 	p->child = p->sibling = NULL;
 	return p;
 }
 
-TreeNode *createTreeNodeExp(ExpKind expKind, char *symbolName = NULL, OpType op = 0, SymbolType symbolType = 0, int size = 0)
+TreeNode *createTreeNodeExp(Expression T)
 // parameter size is only for ARRAYKIND
 {
 	TreeNode *p = (TreeNode*)malloc(sizeof(TreeNode));
@@ -70,29 +70,30 @@ TreeNode *createTreeNodeExp(ExpKind expKind, char *symbolName = NULL, OpType op 
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
 	}
-	p->nodeKind = EXP;
-	p->kind.expKind = expKind;
-	switch (expKind) { //OPKIND, IDKIND, FUNCKIND, ARRAYKIND
+	p->nodeKind = EXPKIND;
+	p->kind.expKind = T.expKind;
+	switch (T.expKind) { //OPKIND, IDKIND, FUNCKIND, ARRAYKIND
 		OPKIND:
-			p->attr.op = op;
+			p->attr.op = T.op;
 			break;
 		IDKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(symbolName));
-			strcpy(p->attr.symbolName, symbolName);
-			p->symbolType = symbolType;
+			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
+			strcpy(p->attr.symbolName, T.symbolName);
+			p->symbolType = T.symbolType;
 			break;
 		FUNCKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(symbolName));
-			strcpy(p->attr.symbolName, symbolName);
-			p->symbolType = symbolType;
+			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
+			strcpy(p->attr.symbolName, T.symbolName);
+			p->symbolType = T.symbolType;
 			break;
 		ARRAYKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(symbolName));
-			strcpy(p->attr.symbolName, symbolName);
-			p->symbolType = symbolType;
-			p->attr.size = size;
+			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
+			strcpy(p->attr.symbolName, T.symbolName);
+			p->symbolType = T.symbolType;
+			p->attr.size = T.size;
 			break;
 		default:
+			break;
 	}
 	p->child = p->sibling = NULL;
 	return p;	
