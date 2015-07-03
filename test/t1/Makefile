@@ -1,4 +1,4 @@
-TARGET := $(TARGET)
+TARGET := t1
 
 all: $(TARGET).out
 
