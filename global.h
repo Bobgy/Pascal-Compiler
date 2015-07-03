@@ -10,7 +10,10 @@
 int yylex();
 int yyparse();
 
-#define SYMBOL_TABLE_SIZE 1000000
+#define SYMBOL_TABLE_SIZE 1000007
+#define HASH_SEED 31;
+
+extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 
 typedef enum {Element, Array, Function, Constant} SymbolKind;
 typedef union {

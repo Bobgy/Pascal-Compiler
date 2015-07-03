@@ -5,20 +5,35 @@ void yyerror(char *s)
 	fprintf(stderr, "%s\n", s);
 }
 
+void insert(char* idName, size_t address, TreeNode* treeNode)
+{
+	int index = BKDRhash(idName);
+	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
+		if (symbolTable[index].symbolName==NULL) break;
+	}
+	strcpy(symbolTable[index].symbolName,idName);
+	symbolTable[index].address = address;
+	symbolTable[index].treeNode = treeNode;
+}
+
 SymbolNode *lookup(char *idName)
 {
-
+	int index = BKDRhash(idName);
+	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
+		if (strcmp(symbolTable[index].symbolName,idName)==0) break;
+	}
+	return symbolTable+index;
 }
 
 int BKDRhash(char *s)
 {
 	int n = strlen(s);
 	int i;
-	int res = 0;
+	unsigned int res = 0;
 	for (i = 0; i<n; ++i) {
-		res = (res*HASH_SEED+s[i])%HASH_SIZE;
+		res = res*HASH_SEED+s[i];
 	}
-	return res;
+	return res%SYMBOL_TABLE_SIZE;
 }
 
 TreeNode *createTreeNodeStmt(StmtType stmtType)
