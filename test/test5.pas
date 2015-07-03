@@ -2,8 +2,7 @@ program hello;
 const 
 	ta = 3;
 type
-	ar = array [0..10] of
-	real;
+	ar = array [0..10] of real;
 
 var 
 	c : ar;

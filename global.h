@@ -25,7 +25,7 @@ typedef union {
 struct symbolNode {
 	char* symbolName;
 	size_t address; // store runtime address
-	TypeNode *data; // store named-constant data
+	TreeNode *treeNode; // id on tree
 } SymbolNode;
 
 // Syntax Tree
@@ -42,16 +42,22 @@ typedef enum {
 } SymbolType;
 
 typedef enum {
-	CONST_PART, CONST_EXPR_LIST,
-	FUNCTION_DECL, FUNCTION_HEAD, 
+	ARRAY_TYPE_DECL, ASSIGN_STMT, ARGS_LIST,
+	CASE_STMT, CASE_EXPR, CASE_EXPR_LIST, COMPOUND_STMT, CONST_PART, CONST_EXPR_LIST, 
+	DIRECTION,
+	ELSE_CALUSE, EXPRESSION_LIST, 
+	FILED_DECL, FILED_DECL_LIST, FOR_STMT, FUNCTION_DECL, FUNCTION_HEAD, 
+	IF_STMT,
 	LABEL_PART,  
-	NAME_LIST, 
-	PARA_DECL_LIST, PARA_TYPE_LIST,
-	PROCEDURE_DECL, PROCEDURE_HEAD, PROGRAM, PROGRAM_HEAD, 
+	NAME_LIST, NON_LABEL_STMT,
+	PARA_DECL_LIST, PARA_TYPE_LIST, PARAMETERS,
+	PROCEDURE_DECL, PROCEDURE_HEAD, PROGRAM, PROGRAM_HEAD, PROC_STMT,
+	RECORD_TYPE_DECL, REPEAT_STMT,
 	ROUTINE, ROUTINE_HEAD, ROUTINE_BODY, ROUTINE_PART,	
-	SIMPLE_TYPE_DECL, SUB_ROUTINE,
+	SIMPLE_TYPE_DECL, SUB_ROUTINE, STMT, STMT_LIST,
 	TYPE_DECL, TYPE_DECL_LIST, TYPE_DEFINITION, TYPE_PART, 
-	VAR_DECL, VAR_DECL_LIST, VAR_PART, VAR_PARA_LIST	
+	VAR_DECL, VAR_DECL_LIST, VAR_PART, VAR_PARA_LIST,
+	WHILE_STMT
 } StmtType;
 
 typedef struct treeNode {
@@ -64,8 +70,9 @@ typedef struct treeNode {
 	} kind;
 	struct {
 		OpType op; // operator
-		SymbolValue value; // unnamed-constant
-		char* symbolName; // symbol name
+		SymbolValue value; // constant, remember check sumbolType first
+		char* symbolName; // symbol name, type name, function/procedure name
+		int size; // array size
 	} attr;
 	SymbolType symbolType;
 } TreeNode;
