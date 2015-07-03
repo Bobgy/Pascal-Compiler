@@ -19,7 +19,7 @@ TreeNode *createTreeNodeStmt(StmtType stmtType)
 	return p;
 }
 
-TreeNode *createTreeNodeConstant(char *constName)
+TreeNode *createTreeNodeConstant()
 {
 	TreeNode *p = (TreeNode*)malloc(sizeof(TreeNode));
 	if (p==NULL) {
@@ -28,8 +28,6 @@ TreeNode *createTreeNodeConstant(char *constName)
 	}
 	p->nodeKind = EXP;
 	p->kind.expKind = CONSTKIND;
-	p->attr.symbolName = (char*)malloc(sizeof(constName));
-	strcpy(p->attr.symbolName, constName);
 	p->child = p->sibling = NULL;
 	return p;
 }

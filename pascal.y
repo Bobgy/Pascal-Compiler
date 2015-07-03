@@ -28,8 +28,6 @@
 program: program_head  routine  DOT {
 	$$ = createTreeNodeStmt(PROGRAM);
 	syntaxTreeRoot = $$;
-	$1 = createTreeNodeStmt(PROGRAM_HEAD);
-	$2 = createTreeNodeStmt(ROUTINE);
 	$$->child = $1;
 	$1->sibling = $2;
 }
@@ -37,26 +35,20 @@ program: program_head  routine  DOT {
 program_head: PROGRAM  NAME  SEMI
 ;
 routine: routine_head  routine_body {
-	$1 = createTreeNodeStmt(ROUTINE_HEAD);
-	$2 = createTreeNodeStmt(ROUTINE_BODY);
+	$$ = createTreeNodeStmt(ROUTINE);
 	$$->child = $1;
 	$1->sibling = $2;
 }
 ;
 sub_routine: routine_head  routine_body {
-	$1 = createTreeNodeStmt(ROUTINE_HEAD);
-	$2 = createTreeNodeStmt(ROUTINE_BODY);
+	$$ = createTreeNodeStmt(SUB_ROUTINE);
 	$$->child = $1;
 	$1->sibling = $2;
 }
 ;
 
 routine_head: label_part  const_part  type_part  var_part  routine_part {
-	$1 = createTreeNodeStmt(LABEL_PART);
-	$2 = createTreeNodeStmt(CONST_PART);
-	$3 = createTreeNodeStmt(TYPE_PART);
-	$4 = createTreeNodeStmt(VAR_PART);
-	$5 = createTreeNodeStmt(ROUTINE_PART);
+	$$ = createTreeNodeStmt(ROUTINE_HEAD);
 	$$->child = $1;
 	$1->sibling = $2; $2->sibling = $3; $3->sibling = $4; $4->sibling = $5;
 }
@@ -64,39 +56,47 @@ routine_head: label_part  const_part  type_part  var_part  routine_part {
 label_part: 
 ;
 const_part: CONST const_expr_list {
-	$2 = createTreeNodeStmt(CONST_EXPR_LIST);
+	$$ = createTreeNodeStmt(CONST_PART);
 	$$->child = $2;
 }
 |;
 const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
-			$1 = createTreeNodeStmt(CONST_EXPR_LIST);
-			$4 = createTreeNodeConstant($2);
+			$4->attr.symbolName = (char*)malloc(sizeof($2));
+			strcpy(p->attr.symbolName, $2);
+			$$ = createTreeNodeStmt(CONST_EXPR_LIST);
 			$$->child = $1;
 			$1->sibling = $4;
 		}
 		|  NAME  EQUAL  const_value  SEMI {
-			$3 = createTreeNodeConstant($1);
+			$3->attr.symbolName = (char*)malloc(sizeof($1));
+			strcpy(p->attr.symbolName, $1);
+			$$ = createTreeNodeStmt(CONST_EXPR_LIST);
 			$$->child = $3;
 		}
 ;
 const_value: INTEGER {
+				$$ = createTreeNodeConstant();
 				$$->type = INTEGER;
 				$$->attr.value.integer = atoi($1);
 			}
 			|  REAL {
+				$$ = createTreeNodeConstant();
 				$$->type = REAL;
 				$$->attr.value.real = atof($1);
 			}
 			|  CHAR {
+				$$ = createTreeNodeConstant();
 				$$->type = CHARACTER;
 				$$->attr.value.character = $1[0];
 			}  
 			|  STRING {
+				$$ = createTreeNodeConstant();
 				$$->type = STRING;
 				$$->attr.value.string = (char*)malloc(sizeof($1));
 				strcpy($$->attr.value.string, $1);
 			}
 			|  SYS_CON {
+				$$ = createTreeNodeConstant();
 				if (strcmp($1,"false")==0) {
 					$$->type = BOOLEAN;
 					$$-attr.value.boolean = 0;
@@ -113,18 +113,17 @@ const_value: INTEGER {
 			};
 
 type_part: TYPE type_decl_list {
-				$2 = createTreeNodeStmt(TYPE_DECL_LIST);
+				$$ = createTreeNodeStmt(TYPE_PART);
 				$$->child = $2;
 			}
 |;
 type_decl_list: type_decl_list  type_definition {
-					$1 = createTreeNodeStmt(TYPE_DECL_LIST);
-					$2 = createTreeNodeStmt(TYPE_DEFINITION);
+					$$ = createTreeNodeStmt(TYPE_DECL_LIST);
 					$$->child = $1;
 					$1->sibling = $2;
 				}
 				| type_definition {
-					$1 = createTreeNodeStmt(TYPE_DEFINITION);
+					$$ = createTreeNodeStmt(TYPE_DECL_LIST);
 					$$->child = $1;
 				}
 ;
@@ -151,91 +150,86 @@ name_list: name_list  COMMA  NAME
 		|  NAME
 ;
 var_part: VAR  var_decl_list {
-	$2 = createTreeNodeStmt(VAR_DECL_LIST);
+	$$ = createTreeNodeStmt(VAR_PART);
 	$$->child = $2;
 }
 |;
 var_decl_list : var_decl_list  var_decl {
-					$1 = createTreeNodeStmt(VAR_DECL_LIST);
-			  		$2 = createTreeNodeStmt(VAR_DECL);
+					$$ = createTreeNodeStmt(VAR_DECL_LIST);
 					$$->child = $1;
 					$1->sibling = $2;
 			 	}
 			 	|  var_decl {
-			 		$1 = createTreeNodeStmt(VAR_DECL);
+			 		$$ = createTreeNodeStmt(VAR_DECL_LIST);
 			 		$$->child = $1;
 			 	}
 ;
 var_decl :  name_list  COLON  type_decl  SEMI {
-				$1 = createTreeNodeStmt(NAME_LIST);
-				$3 = createTreeNodeStmt(TYPE_DECL);
+				$$ = createTreeNodeStmt(VAR_DECL);
 				$$->child = $1;
 				$1->sibling = $3;
 			}
 ;
 routine_part: routine_part  function_decl {
-				$1 = createTreeNodeStmt(ROUTINE_PART);
-				$2 = createTreeNodeStmt(FUNCTION_DECL);
+				$$ = createTreeNodeStmt(ROUTINE_PART);
 				$$->child = $1;
 				$1->sibling = $2;
 			}
 		|  routine_part  procedure_decl {
-			$1 = createTreeNodeStmt(ROUTINE_PART);
-			$2 = createTreeNodeStmt(PROCEDURE_DECL);
+			$$ = createTreeNodeStmt(ROUTINE_PART);
 			$$->child = $1;
 			$1->sibling = $2;
 		}
 		|  function_decl {
-			$1 = createTreeNodeStmt(FUNCTION_DECL);
+			$$ = createTreeNodeStmt(ROUTINE_PART);
 			$$->child = $1;
 		}
 		|  procedure_decl {
-			$1 = createTreeNodeStmt(PROCEDURE_DECL);
+			$$ = createTreeNodeStmt(ROUTINE_PART);
 			$$->child = $1;
 		}
 		| ;
 function_decl : function_head  SEMI  sub_routine  SEMI {
-					$1 = createTreeNodeStmt(FUNCTION_HEAD);
-					$3 = createTreeNodeStmt(SUB_ROUTINE);
+					$$ = createTreeNodeStmt(FUNCTION_DECL);
 					$$->child = $1;
 					$1->sibling = $3;
 				};
 function_head :  FUNCTION  NAME  parameters  COLON  simple_type_decl {
-					$3 = createTreeNodeStmt($2); 
-					// parameters saved the name of function
-					$5 = createTreeNodeStmt(SIMPLE_TYPE_DECL);
+					$$ = createTreeNodeStmt(FUNCTION_HEAD);
+					$$->attr.symbolName = (char*)malloc(sizeof($2));
+					strcpy($$->attr.symbolName, $2);
+					// function_head saved the name of function
 					$$->child = $3;
 					$3->sibling = $5;
 				};
 procedure_decl :  procedure_head  SEMI  sub_routine  SEMI
-					$1 = createTreeNodeStmt(PROCEDURE_HEAD);
-					$3 = createTreeNodeStmt(SUB_ROUTINE);
+					$$ = createTreeNodeStmt(PROCEDURE_DECL);
 					$$->child = $1;
 					$1->sibling = $3;
 				};
 procedure_head :  PROCEDURE NAME parameters 
-					$3 = createTreeNodeStmt($2); 
-					// parameters saved the name of function
+					$$ = createTreeNodeStmt(PROCEDURE_HEAD); 
+					$$->attr.symbolName = (char*)malloc(sizeof($2));
+					strcpy($$->attr.symbolName, $2);
+					// procedure_head saved the name of function
 					$$->child = $3;
 				};
 parameters: LP  para_decl_list  RP {
-			$2 = createTreeNodeStmt(PARA_DECL_LIST);
+			$$ = createTreeNodeStmt(PARAMETERS);
 			$$->child = $2;
 }
 |;
 para_decl_list: para_decl_list  SEMI  para_type_list {
-					$1 = createTreeNodeStmt(PARA_DECL_LIST);
-					$3 = createTreeNodeStmt(PARA_TYPE_LIST);
+					$$ = createTreeNodeStmt(PARA_DECL_LIST);
 					$$->child = $1;
 					$1->sibling = $3;
 				}
 				| para_type_list {
-					$1 = createTreeNodeStmt(PARA_TYPE_LIST);
+					$$ = createTreeNodeStmt(PARA_DECL_LIST);
 					$$->child = $1;
 				};
 para_type_list: var_para_list COLON  simple_type_decl {
-					$1 = createTreeNodeStmt(VAR_PARA_LIST);
-					$3 = createTreeNodeStmt(SIMPLE_TYPE_DECL);
+					$$ = createTreeNodeStmt(PARA_TYPE_LIST);
 					$$->child = $1;
 					$1->sibling = $3;
 				}  
