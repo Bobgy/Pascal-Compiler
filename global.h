@@ -25,7 +25,7 @@ typedef union {
 struct symbolNode {
 	char* symbolName;
 	size_t address; // store runtime address
-	TypeNode *data; // store named-constant data
+	TreeNode *treeNode; // id on tree
 } SymbolNode;
 
 // Syntax Tree
@@ -72,6 +72,7 @@ typedef struct treeNode {
 		OpType op; // operator
 		SymbolValue value; // constant, remember check sumbolType first
 		char* symbolName; // symbol name, type name, function/procedure name
+		int size; // array size
 	} attr;
 	SymbolType symbolType;
 } TreeNode;

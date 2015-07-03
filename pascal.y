@@ -447,6 +447,10 @@ case_expr: 	const_value  COLON  stmt  SEMI {
 ;
 goto_stmt: GOTO  INTEGER // just skipped
 ;
+
+//////////////////////////////////////
+//  expression part                ///
+/////////////////////////////////////
 expression_list: expression_list  COMMA  expression {
 					$$ = createTreeNodeStmt(EXPRESSION_LIST);
 					$$->child = $1;
@@ -457,35 +461,119 @@ expression_list: expression_list  COMMA  expression {
 					$$->child = $1;
 				};
 expression: expression  GE  expr {
-				$$ = createTreeNodeExp
+				$$ = createTreeNodeExp(OPKIND,"",GE);
+				$$->child = $1;
+				$1->sibling = $3;
 			} 
-			|  expression  GT  expr 
-			|  expression  LE  expr
-			|  expression  LT  expr  
-			|  expression  EQUAL  expr  
-			|  expression  UNEQUAL  expr  
-			|  expr
+			|  expression  GT  expr {
+				$$ = createTreeNodeExp(OPKIND,"",GT);
+				$$->child = $1;
+				$1->sibling = $3;
+			} 
+			|  expression  LE  expr {
+				$$ = createTreeNodeExp(OPKIND,"",LE);
+				$$->child = $1;
+				$1->sibling = $3;
+			} 
+			|  expression  LT  expr {
+				$$ = createTreeNodeExp(OPKIND,"",LT);
+				$$->child = $1;
+				$1->sibling = $3;
+			} 
+			|  expression  EQUAL  expr {
+				$$ = createTreeNodeExp(OPKIND,"",EQUAL);
+				$$->child = $1;
+				$1->sibling = $3;
+			} 
+			|  expression  UNEQUAL  expr {
+				$$ = createTreeNodeExp(OPKIND,"",UNEQUAL);
+				$$->child = $1;
+				$1->sibling = $3;
+			} 
+			|  expr {
+				$$ = $1;
+			}
 ;
-expr: expr  PLUS  term  |  expr  MINUS  term  |  expr  OR  term  |  term
+expr: expr  PLUS  term {
+		$$ = createTreeNodeExp(OPKIND,"",PLUS);
+		$$->child = $1;
+		$1->sibling = $3;
+	}
+	|  expr  MINUS  term {
+		$$ = createTreeNodeExp(OPKIND,"",MINUS);
+		$$->child = $1;
+		$1->sibling = $3;
+	}
+	|  expr  OR  term {
+		$$ = createTreeNodeExp(OPKIND,"",OR);
+		$$->child = $1;
+		$1->sibling = $3;
+	}
+	|  term {
+		$$ = $1;
+	}
 ;
-term: term  MUL  factor  
-	|  term  DIV  factor  
-	|  term  MOD  factor 
-	|  term  AND  factor  
-	|  factor
- ;
-factor: NAME  
-	|  NAME  LP  args_list  RP  
-	|  SYS_FUNCT
-	|  SYS_FUNCT  LP  args_list  RP  
-	|  const_value  
-	|  LP  expression  RP 
-	|  NOT  factor  
-	|  MINUS  factor  
-	|  NAME  LB  expression  RB
-	|  NAME  DOT  NAME
+term: term  MUL  factor {
+		$$ = createTreeNodeExp(OPKIND,"",MUL);
+		$$->child = $1;
+		$1->sibling = $3;	
+	}
+	|  term  DIV  factor {
+		$$ = createTreeNodeExp(OPKIND,"",DIV);
+		$$->child = $1;
+		$1->sibling = $3;		
+	} 
+	|  term  MOD  factor {
+		$$ = createTreeNodeExp(OPKIND,"",MOD);
+		$$->child = $1;
+		$1->sibling = $3;		
+	} 
+	|  term  AND  factor {
+		$$ = createTreeNodeExp(OPKIND,"",AND);
+		$$->child = $1;
+		$1->sibling = $3;		
+	} 
+	|  factor {
+		$$ = $1;
+	}
 ;
-args_list: 	args_list  COMMA  expression  {
+factor: NAME {
+		$$ = lookup($1)->treeNode;
+	}
+	|  NAME  LP  args_list  RP {
+		TreeNode *p = lookup($1);
+		$$ = createTreeNodeExp(p->treeNode->kind.expKind,$1,0,p->treeNode->symbolType,p->treeNode->attr.size);
+		$$->child = $3;
+	}
+	|  SYS_FUNCT { //"abs", "chr", "odd", "ord", "pred", "sqr", "sqrt", "succ"
+		$$ = createTreeNodeExp(FUNCKIND,$1,0,INTEGER);
+	}
+	|  SYS_FUNCT  LP  args_list  RP {
+		$$ = createTreeNodeExp(FUNCKIND,$1,0,INTEGER);
+		$$->child = $3;	
+	}
+	|  const_value {
+		$$ = $1;
+	}
+	|  LP  expression  RP {
+		$$ = $2;
+	}
+	|  NOT  factor {
+		$$ = createTreeNodeExp(OPKIND,"",NOT);
+		$$->child = $2;
+	}
+	|  MINUS  factor {
+		$$ = createTreeNodeExp(OPKIND,"",MINUS);
+		$$->child = $2;
+	}
+	|  NAME  LB  expression  RB {
+	}
+	|  NAME  DOT  NAME {
+		$$ = createTreeNodeExp(OPKIND,"",DOT);
+		memcpy($$->child,lookup($1),sizeof(TreeNode));
+	}
+;
+args_list: 	args_list  COMMA  expression {
 				$$ = createTreeNodeStmt(ARGS_LIST);
 				$$->child = $1;
 				$1->sibling = $3;
