@@ -457,7 +457,7 @@ expression_list: expression_list  COMMA  expression {
 					$$->child = $1;
 				};
 expression: expression  GE  expr {
-
+				$$ = createTreeNodeExp
 			} 
 			|  expression  GT  expr 
 			|  expression  LE  expr
@@ -493,14 +493,6 @@ args_list: 	args_list  COMMA  expression  {
 			|  expression {
 				$$ = createTreeNodeStmt(ARGS_LIST);
 				$$->child = $1;
-			}
-}
-;
+			};
 
 %%
-
-int main()
-{
-	return yyparse();
-}
-

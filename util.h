@@ -5,7 +5,7 @@ int yylex();
 int yylex(void);
 void yyerror(char *s);
 TreeNode *createTreeNodeStmt(char*);
-TreeNode *createTreeNodeConstant(char*);
-TreeNode *createTreeNodeFunction(char*)
+TreeNode *createTreeNodeConstant();
+TreeNode *createTreeNodeExp()
 
 #endif
