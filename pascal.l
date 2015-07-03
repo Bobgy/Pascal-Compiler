@@ -5,10 +5,6 @@
 #include <ctype.h>
 #include "y.tab.h"
 
-#define HASH_SIZE 1000007
-const int HASH_SEED = 31;
-
-int hashTable[HASH_SIZE];
 int name_part = 0;
 
 int isInteger(char *s) {
