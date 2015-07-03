@@ -45,4 +45,4 @@ utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c
 	gcc test_lex.o $(LEX_TARGET).o -o utils/$(LEX_TARGET).out
 
 test: utils/$(LEX_TARGET).out
-	tools/$(LEX_TARGET).out < test/test.pas | utils/token.py ./$(YACC_TARGET).h
+	utils/$(LEX_TARGET).out < test/test.pas | utils/token.py $(YACC_TARGET).h

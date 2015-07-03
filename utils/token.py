@@ -12,11 +12,12 @@ while str:
 dic.close()
 cnt = 0
 while True:
-	try:
-		print D[raw_input()], 
-		cnt += 1
-		if cnt % 10 == 0:
-			print
-	except:
-		print
-		break
+    try:
+        token = D[raw_input()]
+                print token,
+        cnt += 1
+        if token == 'SEMI':
+            print
+    except:
+        print
+        break
