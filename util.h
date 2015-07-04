@@ -4,6 +4,7 @@
 int yylex();
 int yylex(void);
 void yyerror(char *s);
+void yyinfo(char *s);
 TreeNode *createTreeNodeStmt(StmtType);
 TreeNode *createTreeNodeConstant();
 typedef struct expression {
@@ -23,6 +24,12 @@ char *strAllocCopy(char *);
 
 //allocate space and concatenate catS and catT
 char *strAllocCat(char *catS, char *catT);
+
+//concatenate path
+void strCatPath(char *path, char *name);
+
+//get parent path
+void strParentPath(char *path);
 
 //parse tree to assembly type string
 char *asmParseType(TreeNode *);

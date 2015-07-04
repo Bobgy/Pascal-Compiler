@@ -2,7 +2,8 @@
 #include "global.h"
 #include "util.h"
 Expression NULL_EXP;
-char buf[256];
+char buf[MAX_LENGTH*10];
+char path[MAX_LENGTH];
 %}
 
 %token NAME
@@ -271,32 +272,45 @@ routine_part: routine_part  function_decl {
         | {
             $$ = createTreeNodeStmt(ROUTINE_PART);
         };
-function_decl : function_head  SEMI  sub_routine  SEMI {
-                    $$ = createTreeNodeStmt(FUNCTION_DECL);
-                    $$->child = $1;
-                    $1->sibling = $3;
-                };
-function_head :  FUNCTION  NAME  parameters  COLON  simple_type_decl {
-                    $$ = createTreeNodeStmt(FUNCTION_HEAD);
-                    $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
-                    strcpy($$->attr.symbolName, $2->attr.symbolName);
-                    // function_head saved the name of function
-                    $$->child = $3;
-                    $3->sibling = $5;
-                };
-procedure_decl :  procedure_head  SEMI  sub_routine  SEMI {
-                    $$ = createTreeNodeStmt(PROCEDURE_DECL);
-                    $$->child = $1;
-                    $1->sibling = $3;
-                };
-procedure_head :  PROCEDURE NAME parameters {
-                    $$ = createTreeNodeStmt(PROCEDURE_HEAD);
-                    $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
-                    strcpy($$->attr.symbolName, $2->attr.symbolName);
-                    // procedure_head saved the name of function
-                    $$->child = $3;
-                }
-;
+function_decl :
+    function_head  SEMI  sub_routine  SEMI {
+        $$ = createTreeNodeStmt(FUNCTION_DECL);
+        $$->child = $1;
+        $1->sibling = $3;
+        strParentPath(path);
+        yyinfo("Leaving path:");
+        yyinfo(path);
+    };
+function_head :
+    FUNCTION  NAME  parameters  COLON  simple_type_decl {
+        $$ = createTreeNodeStmt(FUNCTION_HEAD);
+        $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
+        // function_head saved the name of function
+        $$->child = $3;
+        $3->sibling = $5;
+        strCatPath(path, $2->attr.symbolName);
+        yyinfo("Entering path:");
+        yyinfo(path);
+    };
+procedure_decl :
+    procedure_head  SEMI  sub_routine  SEMI {
+        $$ = createTreeNodeStmt(PROCEDURE_DECL);
+        $$->child = $1;
+        $1->sibling = $3;
+        strParentPath(path);
+        yyinfo("Leaving path:");
+        yyinfo(path);
+    };
+procedure_head :
+    PROCEDURE NAME parameters {
+        $$ = createTreeNodeStmt(PROCEDURE_HEAD);
+        $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
+        // procedure_head saved the name of function
+        $$->child = $3;
+        strCatPath(path, $2->attr.symbolName);
+        yyinfo("Entering path:");
+        yyinfo(path);
+    };
 parameters: LP  para_decl_list  RP {
             $$ = createTreeNodeStmt(PARAMETERS);
             $$->child = $2;
