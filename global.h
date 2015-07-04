@@ -23,7 +23,7 @@ typedef union {
 // Syntax Tree
 typedef enum {STMTKIND,EXPKIND} NodeKind;
 typedef enum {
-	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND
+	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND
 } ExpKind;
 typedef enum {
 	DOT, EQUAL, LP, RP, LB, RB, ASSIGN, GE, GT, LE, LT, UNEQUAL,

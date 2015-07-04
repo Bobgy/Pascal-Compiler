@@ -54,7 +54,7 @@ void insert(char* idName, size_t address, TreeNode* treeNode)
 	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
 		if (symbolTable[index].symbolName==NULL) break;
 	}
-	strcpy(symbolTable[index].symbolName,idName);
+	symbolTable[index].symbolName = strAllocCopy(idName);
 	symbolTable[index].address = address;
 	symbolTable[index].treeNode = treeNode;
 }
@@ -62,10 +62,20 @@ void insert(char* idName, size_t address, TreeNode* treeNode)
 SymbolNode *lookup(char *idName)
 {
 	int index = BKDRhash(idName);
+	int found = 0;
 	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
-		if (strcmp(symbolTable[index].symbolName,idName)==0) break;
+		if (symbolTable[index].symbolName==NULL) break; // not found
+		if (strcmp(symbolTable[index].symbolName,idName)==0) {
+			found = 1;
+			break;
+		}
 	}
-	return symbolTable+index;
+	if (found) {
+		return symbolTable+index;
+	} else {
+		yyinfo("SymbolTable not found!");
+		return NULL;
+	}
 }
 
 TreeNode *createTreeNodeStmt(StmtType stmtType)
@@ -125,6 +135,8 @@ TreeNode *createTreeNodeExp(Expression T)
 			strcpy(p->attr.symbolName, T.symbolName);
 			p->symbolType = T.symbolType;
 			p->attr.size = T.size;
+			break;
+		RECORDKIND:
 			break;
 		default:
 			break;
