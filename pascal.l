@@ -35,7 +35,10 @@ rp        ")"
 lb        "["
 rb        "]"
 dotdot        ".."
-sys_type    "boolean"|"char"|"integer"|"real"
+boolean   "boolean"
+char      "char"
+integer   "integer"
+real      "real"
 array        "array"
 of        "of"
 record        "record"
@@ -116,7 +119,26 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {lb}        {return LB;}
 {rb}        {return RB;}
 {dotdot}    {return DOTDOT;}
-{sys_type}    {return SYS_TYPE;}
+{integer} {
+    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval->symbolType = TYPE_INTEGER;
+    return SYS_TYPE;
+}
+{boolean} {
+    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval->symbolType = TYPE_BOOLEAN;
+    return SYS_TYPE;
+}
+{char} {
+    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval->symbolType = TYPE_CHARACTER;
+    return SYS_TYPE;
+}
+{real} {
+    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval->symbolType = TYPE_REAL;
+    return SYS_TYPE;
+}
 {array}        {return ARRAY;}
 {of}        {return OF;}
 {record}    {return RECORD;}
@@ -171,7 +193,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             }
         }
         if (noDot) {
-            WARN_NULL(yylval = createTreeNodeConstant());
+            yylval = createTreeNodeConstant();
             yylval->attr.symbolName = strAllocCopy(yytext);
 			return NAME;
         }
@@ -184,7 +206,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             if (isInteger(yytext)) {
                 int x;
                 sscanf(yytext, "%d", &x);
-                WARN_NULL(yylval = createTreeNodeConstant());
+                yylval = createTreeNodeConstant();
                 yylval->attr.value.integer = x;
                 return INTEGER;
             }
@@ -204,7 +226,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 if (isInteger(a) && isInteger(b)) {
                     double x;
                     sscanf(yytext, "%lf", &x);
-                    WARN_NULL(yylval = createTreeNodeConstant());
+                    yylval = createTreeNodeConstant();
                     yylval->attr.value.real = x;
                     return REAL;
                 }

@@ -3,7 +3,7 @@ const
 	cn = 2;
 	dn = 123.23;
 
-var	
+var
 	k : integer;
 
 procedure outer;

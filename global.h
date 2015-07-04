@@ -30,7 +30,7 @@ typedef enum {
 	PLUS, MINUS, MUL, MOD, DIV, OR, AND, NOT
 } OpType;
 typedef enum {
-	VOID, INTEGER, BOOLEAN, REAL, CHARACTER, STRING
+	TYPE_VOID, TYPE_INTEGER, TYPE_BOOLEAN, TYPE_REAL, TYPE_CHARACTER, TYPE_STRING
 } SymbolType;
 
 typedef enum {
@@ -55,7 +55,7 @@ typedef enum {
 typedef struct treeNode {
 	struct treeNode *child; // for exp
 	struct treeNode *sibling; // for stmt
-	NodeKind nodeKind; // StmtK, ExpK
+	NodeKind nodeKind; // STMTKIND, EXPKIND
 	union {
 		StmtType stmtType;
 		ExpKind expKind;
@@ -89,5 +89,7 @@ extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 #endif
 
 #define WARN_NULL(x) do { if ((x) == NULL) {fprintf(stderr, "WARNING: "#x" is NULL\n");} } while(0)
+
+#define MAX_LENGTH 128
 
 #endif

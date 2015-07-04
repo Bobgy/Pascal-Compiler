@@ -14,9 +14,20 @@ typedef struct expression {
 	int size;
 } Expression;
 TreeNode *createTreeNodeExp(Expression);
+int BKDRhash(char *s);
 void insert(char*, size_t, TreeNode*);
 SymbolNode *lookup(char*);
 
 //allocate space that fits string s and copy it
-char *strAllocCopy(char *s);
+char *strAllocCopy(char *);
+
+//allocate space and concatenate catS and catT
+char *strAllocCat(char *catS, char *catT);
+
+//parse tree to assembly type string
+char *asmParseType(TreeNode *);
+
+//concatenate assembly of a node's siblings
+char *asmCatSiblin(TreeNode *p);
+
 #endif

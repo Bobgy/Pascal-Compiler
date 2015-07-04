@@ -5,6 +5,17 @@ void yyerror(char *s)
 	fprintf(stderr, "%s\n", s);
 }
 
+int BKDRhash(char *s)
+{
+	int n = strlen(s);
+	int i;
+	unsigned int res = 0;
+	for (i = 0; i<n; ++i) {
+		res = res*HASH_SEED+s[i];
+	}
+	return res%SYMBOL_TABLE_SIZE;
+}
+
 void insert(char* idName, size_t address, TreeNode* treeNode)
 {
 	int index = BKDRhash(idName);
@@ -23,17 +34,6 @@ SymbolNode *lookup(char *idName)
 		if (strcmp(symbolTable[index].symbolName,idName)==0) break;
 	}
 	return symbolTable+index;
-}
-
-int BKDRhash(char *s)
-{
-	int n = strlen(s);
-	int i;
-	unsigned int res = 0;
-	for (i = 0; i<n; ++i) {
-		res = res*HASH_SEED+s[i];
-	}
-	return res%SYMBOL_TABLE_SIZE;
 }
 
 TreeNode *createTreeNodeStmt(StmtType stmtType)
@@ -105,7 +105,46 @@ TreeNode *createTreeNodeExp(Expression T)
 
 //allocate space that fits string s and copy it
 char *strAllocCopy(char *s) {
+	WARN_NULL(s);
 	char *p = (char *) malloc(strlen(s)+1);
 	if (p!=NULL) strcpy(p, s);
 	return p;
+}
+
+//allocate space and concatenate catS and catT
+char *strAllocCat(char *catS, char *catT) {
+	WARN_NULL(catS); WARN_NULL(catT);
+	char *ret = (char*) malloc(strlen(catS) + strlen(catT) + 1);
+	strcpy(ret, catS);
+	strcat(ret, catT);
+	return ret;
+}
+
+//parse tree to assembly type string
+char *asmParseType(TreeNode *p) {
+	switch (p->symbolType) {
+		case TYPE_INTEGER: return "i32";
+		case TYPE_REAL:    return "double";
+		case TYPE_BOOLEAN:
+		case TYPE_CHARACTER:    return "i8";
+		default: yyerror("asmParseType: type not found");
+	}
+	return NULL;
+}
+
+//concatenate assembly of a node's siblings
+char *asmCatSiblin(TreeNode *p) {
+	int totLen = 0;
+	TreeNode *t;
+	for (t = p; t != NULL; t = t->sibling) {
+		char *s = t->attr.assembly;
+		if (s != NULL) totLen += strlen(s);
+	}
+	char *ret = (char*) malloc(totLen + 1);
+	ret[0] = '\0';
+	for (t = p; t != NULL; t = t->sibling) {
+		char *s = t->attr.assembly;
+		if (s != NULL) strcat(ret, t->attr.assembly);
+	}
+	return ret;
 }
