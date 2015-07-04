@@ -46,6 +46,7 @@ TreeNode *createTreeNodeStmt(StmtType stmtType)
 	p->nodeKind = STMTKIND;
 	p->kind.stmtType = stmtType;
 	p->child = p->sibling = NULL;
+	p->attr.assembly = NULL;
 	return p;
 }
 
@@ -59,6 +60,7 @@ TreeNode *createTreeNodeConstant()
 	p->nodeKind = EXPKIND;
 	p->kind.expKind = CONSTKIND;
 	p->child = p->sibling = NULL;
+	p->attr.assembly = NULL;
 	return p;
 }
 
@@ -96,6 +98,7 @@ TreeNode *createTreeNodeExp(Expression T)
 			break;
 	}
 	p->child = p->sibling = NULL;
+	p->attr.assembly = NULL;
 	return p;
 }
 

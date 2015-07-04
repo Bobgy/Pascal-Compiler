@@ -171,7 +171,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             }
         }
         if (noDot) {
-            yylval = createTreeNodeConstant();
+            WARN_NULL(yylval = createTreeNodeConstant());
             yylval->attr.symbolName = strAllocCopy(yytext);
 			return NAME;
         }
@@ -184,7 +184,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             if (isInteger(yytext)) {
                 int x;
                 sscanf(yytext, "%d", &x);
-                yylval = createTreeNodeConstant();
+                WARN_NULL(yylval = createTreeNodeConstant());
                 yylval->attr.value.integer = x;
                 return INTEGER;
             }
@@ -204,7 +204,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 if (isInteger(a) && isInteger(b)) {
                     double x;
                     sscanf(yytext, "%lf", &x);
-                    yylval = createTreeNodeConstant();
+                    WARN_NULL(yylval = createTreeNodeConstant());
                     yylval->attr.value.real = x;
                     return REAL;
                 }

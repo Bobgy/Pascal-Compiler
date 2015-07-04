@@ -65,6 +65,7 @@ typedef struct treeNode {
 		SymbolValue value; // constant, remember check sumbolType first
 		char* symbolName; // symbol name, type name, function/procedure name
 		int size; // array size
+		char* assembly; //generated assembly, NULL means no code
 	} attr;
 	SymbolType symbolType;
 } TreeNode;
@@ -86,5 +87,7 @@ extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 	#define YYSTYPE_IS_DECLARED 1
 	typedef TreeNode *YYSTYPE;
 #endif
+
+#define WARN_NULL(x) do { if ((x) == NULL) {fprintf(stderr, "WARNING: "#x" is NULL\n");} } while(0)
 
 #endif
