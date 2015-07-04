@@ -177,8 +177,7 @@ simple_type_decl: //TODO cannot determine which type
     |  LP  name_list  RP
     |  const_value  DOTDOT  const_value {  // just need this to pass test
         $$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
-        $$->child = $1;
-        $1->sibling = $3;
+        $$->attr.value.integer = $3->attr.value.integer;
     }
     |  MINUS  const_value  DOTDOT  const_value
     |  MINUS  const_value  DOTDOT  MINUS  const_value
@@ -187,32 +186,29 @@ simple_type_decl: //TODO cannot determine which type
 array_type_decl: 
     ARRAY  LB  simple_type_decl  RB  OF  type_decl {
         $$ = createTreeNodeStmt(ARRAY_TYPE_DECL);
-        $$->child = $1;
-        $1->sibling = $2;
+        $$->symbolType = $6;
+        $$->attr.size = $3->attr.value.integer;
     }
 ;
 record_type_decl: 
     RECORD  field_decl_list  END {
-        $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
-        $$->child = $2;
+        $$ = $2;
     }
 ;
-
-field_decl_list: field_decl_list  field_decl {
-                    $$ = createTreeNodeStmt(FIELD_DECL_LIST);
-                    $$->child = $1;
-                    $1->sibling = $2;
-                }
-                | field_decl {
-                    $$ = createTreeNodeStmt(FIELD_DECL_LIST);
-                    $$->child = $1;
-                }
+field_decl_list: 
+    field_decl_list  field_decl {
+        $$ = $2;
+        $$->child = $1;
+    }
+    | field_decl {
+        $$ = $1;
+    }
 ;
-field_decl: name_list  COLON  type_decl  SEMI {
-                $$ = createTreeNodeStmt(FIELD_DECL);
-                $$->child = $1;
-                $1->sibling = $3;
-            }
+field_decl: 
+    name_list  COLON  type_decl  SEMI {
+        $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
+        $$->symbolType = $3->symbolType;
+    }
 ;
 name_list: name_list  COMMA  NAME {
             $$ = $3;
