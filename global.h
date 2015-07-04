@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <assert.h>
 
 int yylex();
 int yyparse();
@@ -82,7 +83,7 @@ typedef struct symbolNode {
 extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 
 #ifndef YYSTYPE_IS_DECLARED
-	#define YYSTYPE_IS_DECLARED
+	#define YYSTYPE_IS_DECLARED 1
 	typedef TreeNode *YYSTYPE;
 #endif
 

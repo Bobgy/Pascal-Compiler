@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "global.h"
+#include "util.h"
 #include "y.tab.h"
+extern YYSTYPE yylval;
 
 int name_part = 0;
 
@@ -168,6 +171,8 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             }
         }
         if (noDot) {
+            yylval = createTreeNodeConstant();
+            yylval->attr.symbolName = strAllocCopy(yytext);
 			return NAME;
         }
     }
@@ -176,7 +181,13 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 
         }
         else {
-            if (isInteger(yytext))  return INTEGER;
+            if (isInteger(yytext)) {
+                int x;
+                sscanf(yytext, "%d", &x);
+                yylval = createTreeNodeConstant();
+                yylval->attr.value.integer = x;
+                return INTEGER;
+            }
             char a[256] = {0}, b[256] = {0};
             int dot = -1;
             for (i = 0; i<n; ++i) {
@@ -190,10 +201,17 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 for (i = dot+1; i<n; ++i) {
                     b[i-dot-1] = yytext[i];
                 }
-                if (isInteger(a) && isInteger(b)) return REAL;
+                if (isInteger(a) && isInteger(b)) {
+                    double x;
+                    sscanf(yytext, "%lf", &x);
+                    yylval = createTreeNodeConstant();
+                    yylval->attr.value.real = x;
+                    return REAL;
+                }
             }
         }
     }
+    assert(0 && "LEX: no type found!");
 }
 .|\n {
     //Other

@@ -14,7 +14,7 @@ cnt = 0
 while True:
     try:
         token = D[raw_input()]
-                print token,
+        print token,
         cnt += 1
         if token == 'SEMI':
             print

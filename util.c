@@ -96,5 +96,13 @@ TreeNode *createTreeNodeExp(Expression T)
 			break;
 	}
 	p->child = p->sibling = NULL;
-	return p;	
+	return p;
+}
+
+
+//allocate space that fits string s and copy it
+char *strAllocCopy(char *s) {
+	char *p = (char *) malloc(strlen(s)+1);
+	if (p!=NULL) strcpy(p, s);
+	return p;
 }

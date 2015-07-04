@@ -16,4 +16,7 @@ typedef struct expression {
 TreeNode *createTreeNodeExp(Expression);
 void insert(char*, size_t, TreeNode*);
 SymbolNode *lookup(char*);
+
+//allocate space that fits string s and copy it
+char *strAllocCopy(char *s);
 #endif

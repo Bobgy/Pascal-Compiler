@@ -3,7 +3,7 @@ YACC_TARGET := y.tab
 
 all: $(YACC_TARGET).out
 
-$(YACC_TARGET).out: $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o
+$(YACC_TARGET).out: $(YACC_TARGET).o $(LEX_TARGET).o util.o main.o
 	gcc -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o
 
 $(LEX_TARGET).c: pascal.l
@@ -40,8 +40,8 @@ clean: clean_tmp clean_o clean_exe clean_gen_src
 
 clean_not_src: clean_tmp clean_o clean_exe
 
-utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c
-	gcc -c utils/test_lex.c
-	gcc test_lex.o $(LEX_TARGET).o -o utils/$(LEX_TARGET).out
+utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c util.o util.h
+	gcc -c utils/test_lex.c -o utils/test_lex.o
+	gcc utils/test_lex.o $(LEX_TARGET).o util.o -o utils/$(LEX_TARGET).out
 
 test: utils/$(LEX_TARGET).out
