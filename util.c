@@ -37,10 +37,17 @@ SymbolNode *lookup(char *idName)
 	int index = BKDRhash(idName);
 	int found = 0;
 	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
-		if (strcmp(symbolTable[index].symbolName,idName)==0) break;
+		if (symbolTable[index].symbolName==NULL) break; // not found
+		if (strcmp(symbolTable[index].symbolName,idName)==0) {
+			found = 1;
+			break;
+		}
 	}
 	if (found) {
 		return symbolTable+index;
+	} else {
+		yyinfo("SymbolTable not found!");
+		return NULL;
 	}
 }
 
