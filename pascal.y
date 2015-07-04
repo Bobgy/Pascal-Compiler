@@ -77,12 +77,18 @@ const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
             $$ = createTreeNodeStmt(CONST_EXPR_LIST);
             $$->child = $1;
             $1->sibling = $4;
+            // add to symbol table
+            char *idName = $2->attr.symbolName;
+            insert(strAllocCat(path,idName),0,$4);
         }
         |  NAME  EQUAL  const_value  SEMI {
             $3->attr.symbolName = strAllocCopy($1->attr.symbolName);
             strcpy($3->attr.symbolName, $1->attr.symbolName);
             $$ = createTreeNodeStmt(CONST_EXPR_LIST);
             $$->child = $3;
+            // add to symbol table
+            char *idName = $1->attr.symbolName;
+            insert(strAllocCat(path,idName),0,$3);
         }
 ;
 const_value: INTEGER {
@@ -177,16 +183,18 @@ simple_type_decl: //TODO cannot determine which type
     |  MINUS  const_value  DOTDOT  MINUS  const_value
     |  NAME  DOTDOT  NAME
 ;
-array_type_decl: ARRAY  LB  simple_type_decl  RB  OF  type_decl {
-                    $$ = createTreeNodeStmt(ARRAY_TYPE_DECL);
-                    $$->child = $1;
-                    $1->sibling = $2;
-                }
+array_type_decl: 
+    ARRAY  LB  simple_type_decl  RB  OF  type_decl {
+        $$ = createTreeNodeStmt(ARRAY_TYPE_DECL);
+        $$->child = $1;
+        $1->sibling = $2;
+    }
 ;
-record_type_decl: RECORD  field_decl_list  END {
-                    $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
-                    $$->child = $2;
-                }
+record_type_decl: 
+    RECORD  field_decl_list  END {
+        $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
+        $$->child = $2;
+    }
 ;
 
 field_decl_list: field_decl_list  field_decl {
@@ -249,6 +257,11 @@ var_decl:
             strcat(varDecl, buf);
         }
         $$->attr.assembly = varDecl;
+        // zhujiale
+        for (TreeNode *p = $1; p!=NULL; p = p->child) {
+            char *idName = p->attr.symbolName;
+            insert(strAllocCat(path,idName),0,$3);
+        }
     };
 routine_part: routine_part  function_decl {
                 $$ = createTreeNodeStmt(ROUTINE_PART);
