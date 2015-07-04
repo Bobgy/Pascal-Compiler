@@ -1,1 +1,1 @@
-./y.tab.out < test/simple.pas
+./y.tab.out < test/simple/simple.pas

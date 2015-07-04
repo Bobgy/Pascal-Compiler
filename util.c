@@ -1,5 +1,32 @@
 #include "util.h"
 
+char buf[MAX_LENGTH*10];
+int depth = 0;
+Stack stack[MAX_LENGTH];
+
+void push() {
+	stack[++depth].initList = NULL;
+	top()->paramCount = 0;
+}
+
+void pop() {
+	free(stack[depth--].initList);
+}
+
+Stack *top() {
+	return &stack[depth];
+}
+
+void pushInitList(char *p) {
+	char *s = top()->initList;
+	if (s == NULL) {
+		top()->initList = strAllocCopy(p);
+	} else {
+		top()->initList = strAllocCat(p, s);
+		free(s);
+	}
+}
+
 void yyerror(char *s)
 {
 	fprintf(stderr, "%s\n", s);
@@ -7,7 +34,7 @@ void yyerror(char *s)
 
 void yyinfo(char *s)
 {
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "> %s\n", s);
 }
 
 int BKDRhash(char *s)
@@ -112,6 +139,7 @@ TreeNode *createTreeNodeExp(Expression T)
 char *strAllocCopy(char *s) {
 	WARN_NULL(s);
 	char *p = (char *) malloc(strlen(s)+1);
+	WARN_NULL(p);
 	if (p!=NULL) strcpy(p, s);
 	return p;
 }
@@ -122,6 +150,23 @@ char *strAllocCat(char *catS, char *catT) {
 	char *ret = (char*) malloc(strlen(catS) + strlen(catT) + 1);
 	strcpy(ret, catS);
 	strcat(ret, catT);
+	return ret;
+}
+
+//temporary storage for string pointers
+char *strList[MAX_LENGTH];
+//concatenate strings from global strList
+char *strCatList(int len) {
+	int totLen = 0, i;
+	for (i=0; i<len; ++i) {
+		char *s = strList[i];
+		if (s != NULL) totLen += strlen(s);
+	}
+	char *ret = strAlloc(totLen + 1);
+	for (i=0; i<len; ++i) {
+		char *s = strList[i];
+		if (s != NULL) strcat(ret, s);
+	}
 	return ret;
 }
 
@@ -145,8 +190,7 @@ char *asmCatSiblin(TreeNode *p) {
 		char *s = t->attr.assembly;
 		if (s != NULL) totLen += strlen(s);
 	}
-	char *ret = (char*) malloc(totLen + 1);
-	ret[0] = '\0';
+	char *ret = strAlloc(totLen + 1);
 	for (t = p; t != NULL; t = t->sibling) {
 		char *s = t->attr.assembly;
 		if (s != NULL) strcat(ret, t->attr.assembly);
@@ -172,4 +216,12 @@ void strParentPath(char *path) {
 		if (p==NULL) *path = 0;
 		else p[1] = 0;
 	}
+}
+
+//allocate space for an empty string
+char *strAlloc(int num) {
+	char *p = (char *) malloc(num);
+	WARN_NULL(p);
+	p[0] = 0;
+	return p;
 }

@@ -1,4 +1,4 @@
-TARGET := t1/t1.ll t2/t2.ll
+TARGET := t1/t1.ll t2/t2.ll simple/simple.ll
 
 all: $(TARGET)
 

@@ -174,8 +174,16 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {or}        {return OR;}
 {sys_funct}    {return SYS_FUNCT;}
 {var}        { name_part = 0; return VAR;}
-{function}    { name_part = 0; return FUNCTION;}
-{procedure}    { name_part = 0; return PROCEDURE;}
+{function} {
+    push();
+    name_part = 0;
+    return FUNCTION;
+}
+{procedure} {
+    push();
+    name_part = 0;
+    return PROCEDURE;
+}
 {while}        {return WHILE;}
 {not}        {return NOT;}
 {label}        {return LABEL;}
