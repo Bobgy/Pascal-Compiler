@@ -5,6 +5,11 @@ void yyerror(char *s)
 	fprintf(stderr, "%s\n", s);
 }
 
+void yyinfo(char *s)
+{
+	fprintf(stderr, "%s\n", s);
+}
+
 int BKDRhash(char *s)
 {
 	int n = strlen(s);
@@ -152,4 +157,24 @@ char *asmCatSiblin(TreeNode *p) {
 		if (s != NULL) strcat(ret, t->attr.assembly);
 	}
 	return ret;
+}
+
+//concatenate path
+void strCatPath(char *path, char *name) {
+	WARN_NULL(path); WARN_NULL(name);
+	strcat(path, name);
+	strcat(path, "$");
+}
+
+//get parent path
+void strParentPath(char *path) {
+	WARN_NULL(path);
+	if (path[0]==0) {
+		yyerror("ERROR: get parent path of root");
+	} else {
+		*strrchr(path, '$') = 0;
+		char *p = strrchr(path, '$');
+		if (p==NULL) *path = 0;
+		else p[1] = 0;
+	}
 }
