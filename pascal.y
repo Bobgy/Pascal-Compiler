@@ -20,8 +20,8 @@ Expression NULL_EXP;
 %token SYS_PROC SYS_TYPE READ // see doc
 
 %%
-program: program_head  routine  DOT {
-    $$ = createTreeNodeStmt(PROGRAM);
+program_stmt: program_head  routine  DOT {
+    $$ = createTreeNodeStmt(PROGRAM_STMT);
     syntaxTreeRoot = $$;
     $$->child = $1;
     $1->sibling = $2;
@@ -585,32 +585,32 @@ expression_list: expression_list  COMMA  expression {
                 }
 ;
 expression: expression  GE  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",GE
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GE
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  GT  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",GT
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GT
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  LE  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",LE
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LE
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  LT  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",LT
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LT
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  EQUAL  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",EQUAL
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_EQUAL
                 $$->child = $1;
                 $1->sibling = $3;
             }
             |  expression  UNEQUAL  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",UNEQUAL
+                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_UNEQUAL
                 $$->child = $1;
                 $1->sibling = $3;
             }
@@ -619,17 +619,17 @@ expression: expression  GE  expr {
             }
 ;
 expr: expr  PLUS  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",PLUS
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_PLUS
         $$->child = $1;
         $1->sibling = $3;
     }
     |  expr  MINUS  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MINUS
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MINUS
         $$->child = $1;
         $1->sibling = $3;
     }
     |  expr  OR  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OR
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_OR
         $$->child = $1;
         $1->sibling = $3;
     }
@@ -638,22 +638,22 @@ expr: expr  PLUS  term {
     }
 ;
 term: term  MUL  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MUL
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MUL
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  DIV  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",DIV
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DIV
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  MOD  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MOD
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MOD
         $$->child = $1;
         $1->sibling = $3;
     }
     |  term  AND  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",AND
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_AND
         $$->child = $1;
         $1->sibling = $3;
     }
@@ -675,10 +675,10 @@ factor: NAME {
         $$->child = $3;
     }
     |  SYS_FUNCT { //"abs", "chr", "odd", "ord", "pred", "sqr", "sqrt", "succ"
-        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,INTEGER
+        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,TYPE_INTEGER
     }
     |  SYS_FUNCT  LP  args_list  RP {
-        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,INTEGER
+        $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,TYPE_INTEGER
         $$->child = $3;
     }
     |  const_value {
@@ -688,17 +688,17 @@ factor: NAME {
         $$ = $2;
     }
     |  NOT  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",NOT
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_NOT
         $$->child = $2;
     }
     |  MINUS  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",MINUS
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MINUS
         $$->child = $2;
     }
     |  NAME  LB  expression  RB {
     }
     |  NAME  DOT  NAME {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",DOT
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DOT
         memcpy($$->child,lookup($1->attr.symbolName),sizeof(TreeNode));
     }
 ;
