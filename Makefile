@@ -14,7 +14,7 @@ $(LEX_TARGET).o: $(LEX_TARGET).c $(YACC_TARGET).c $(YACC_TARGET).h
 	gcc $(COP) -c $(LEX_TARGET).c
 
 $(YACC_TARGET).c $(YACC_TARGET).h: pascal.y util.h
-	yacc -dvt pascal.y
+	"yacc" -dvt pascal.y
 
 $(YACC_TARGET).o: $(YACC_TARGET).c $(YACC_TARGET).h
 	gcc $(COP) -c $(YACC_TARGET).c
