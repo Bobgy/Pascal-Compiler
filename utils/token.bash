@@ -11,4 +11,4 @@ else
     CURDIR="`pwd`"/"`dirname $DIRNAME`"
 fi
 
-$CURDIR/$LEX_TARGET.out < $1 | $CURDIR/token.py $CURDIR/../$YACC_TARGET.h
+$CURDIR/$LEX_TARGET.out < $1 | python $CURDIR/token.py $CURDIR/../$YACC_TARGET.h

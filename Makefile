@@ -2,7 +2,7 @@ LEX_TARGET := lex.yy
 YACC_TARGET := y.tab
 COP := -std=c99
 
-all: $(YACC_TARGET).out
+all: $(YACC_TARGET).out test
 
 $(YACC_TARGET).out: $(YACC_TARGET).o $(LEX_TARGET).o util.o main.o
 	gcc -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o
