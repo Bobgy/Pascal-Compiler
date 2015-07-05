@@ -2,8 +2,6 @@
 #include "global.h"
 #include "util.h"
 Expression NULL_EXP;
-char path[MAX_LENGTH];
-int isGlobal = 1;
 %}
 
 %token NAME
@@ -250,18 +248,18 @@ var_decl:
         char *type = asmParseType($3);
         int i = 0;
         for (TreeNode *p = $1; p != NULL; p = p->child, ++i) {
+            char *name = p->attr.symbolName;
             if (isGlobal) {
-                sprintf(buf, "@%s = %s\n", p->attr.symbolName, type);
+                sprintf(buf, "@%s%s = %s\n", path, name, type);
             } else {
-                sprintf(buf, "%%%s = alloca %s\n", p->attr.symbolName, type);
+                sprintf(buf, "%%%s%s = alloca %s\n", path, name, type);
             }
             strList[i] = strAllocCopy(buf);
         }
         $$->attr.assembly = strCatList(i);
         while(~--i)free(strList[i]);
         for (TreeNode *p = $1; p != NULL; p = p->child) {
-            char *idName = p->attr.symbolName;
-            insert(strAllocCat(path, idName), 0, $3);
+            insert(strAllocCat(path, p->attr.symbolName), 0, $3);
         }
     };
 routine_part:
@@ -301,18 +299,12 @@ function_decl :
     };
 function_head :
     FUNCTION  NAME  parameters  COLON  simple_type_decl {
-        //leaving global region
-        isGlobal = 0;
-
         $$ = createTreeNodeStmt(FUNCTION_HEAD);
         $$->attr.symbolName = strAllocCat(path, $2->attr.symbolName);
 
         // function_head saved the name of function
         $$->child = $3;
         $3->sibling = $5;
-        strCatPath(path, $2->attr.symbolName);
-        yyinfo("Entering path:");
-        yyinfo(path);
 
         // asm
         strList[0] = "define ";
@@ -344,16 +336,10 @@ procedure_decl :
     };
 procedure_head :
     PROCEDURE NAME parameters {
-        //leaving global region
-        isGlobal = 0;
-
         $$ = createTreeNodeStmt(PROCEDURE_HEAD);
         $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
         // procedure_head saved the name of function
         $$->child = $3;
-        strCatPath(path, $2->attr.symbolName);
-        yyinfo("Entering path:");
-        yyinfo(path);
 
         // asm
         strList[0] = "define void @";
@@ -395,7 +381,7 @@ para_type_list:
         char *type = asmParseType($3);
         int i = 0, cnt;
         for (TreeNode *p = $1->child; p != NULL; p = p->child, ++i) {
-            char *name = p->attr.symbolName;
+            char *name = strAllocCat(path, p->attr.symbolName);
             if ($1->kind.stmtType == VAR_VAR_PARA_LIST) {
                 if (i) {
                     sprintf(buf, ", %%%s %s", name, type);
@@ -417,6 +403,7 @@ para_type_list:
                 );
                 pushInitList(buf);
             }
+            insert(name, 0, $3);
         }
         $$->attr.assembly = strCatList(i);
         while(~--i)free(strList[i]);
@@ -675,7 +662,12 @@ term: term  MUL  factor {
     }
 ;
 factor: NAME {
-        $$ = lookup($1->attr.symbolName)->treeNode;
+        char *name = $1->attr.symbolName, *pathName;
+        SymbolNode *p = lookup(pathName = strAllocCat(path, name));
+        if (p == NULL) p = lookup(name);
+        if (p == NULL) yyerror("symbol not found");
+        $$ = p->treeNode;
+        free(pathName);
     }
     |  NAME  LP  args_list  RP {
         TreeNode *p = lookup($1->attr.symbolName)->treeNode;

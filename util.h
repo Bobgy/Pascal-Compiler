@@ -9,6 +9,8 @@ typedef struct {
 } Stack;
 extern Stack stack[MAX_LENGTH];
 extern char buf[MAX_LENGTH*10];
+extern char path[MAX_LENGTH];
+extern int isGlobal;
 void push();
 void pop();
 void pushInitList(char *p);

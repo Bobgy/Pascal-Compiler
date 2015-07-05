@@ -74,7 +74,7 @@ extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
 
 // symbol table
 #define SYMBOL_TABLE_SIZE 1000007
-#define HASH_SEED 31;
+#define HASH_SEED 9875321
 typedef struct symbolNode {
 	char* symbolName;
 	size_t address; // store runtime address

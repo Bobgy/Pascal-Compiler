@@ -1,10 +1,18 @@
 #include "util.h"
 
 char buf[MAX_LENGTH*10];
+char path[MAX_LENGTH];
 int depth = 0;
+int isGlobal = 1;
 Stack stack[MAX_LENGTH];
 
-void push() {
+void push(char *func) {
+	strCatPath(path, func);
+    yyinfo("Entering path:");
+    yyinfo(path);
+	yyinfo("\n");
+    //leaving global region
+    isGlobal = 0;
 	stack[++depth].initList = NULL;
 	top()->paramCount = 0;
 }
@@ -29,30 +37,38 @@ void pushInitList(char *p) {
 
 void yyerror(char *s)
 {
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "YYERROR: %s\n", s);
+	exit(-1);
 }
 
 void yyinfo(char *s)
 {
-	fprintf(stderr, "> %s\n", s);
+	fprintf(stderr, "%s", s);
+	fflush(stderr);
 }
 
 int BKDRhash(char *s)
 {
-	int n = strlen(s);
-	int i;
 	unsigned int res = 0;
-	for (i = 0; i<n; ++i) {
-		res = res*HASH_SEED+s[i];
+	for (; *s; ++s) {
+		res = res * HASH_SEED + *s;
 	}
-	return res%SYMBOL_TABLE_SIZE;
+	return res % SYMBOL_TABLE_SIZE;
 }
 
 void insert(char* idName, size_t address, TreeNode* treeNode)
 {
+	yyinfo("Inserting \"");
+	yyinfo(idName);
+	yyinfo("\"\n");
 	int index = BKDRhash(idName);
-	for (; index!=SYMBOL_TABLE_SIZE; ++index) {
+	for (; index != SYMBOL_TABLE_SIZE; ++index) {
+		char *name = symbolTable[index].symbolName;
 		if (symbolTable[index].symbolName==NULL) break;
+		else if (strcmp(name, idName)==0) {
+			sprintf(buf, "%s redeclared!\n", name);
+			yyerror(buf);
+		}
 	}
 	symbolTable[index].symbolName = strAllocCopy(idName);
 	symbolTable[index].address = address;
@@ -73,7 +89,8 @@ SymbolNode *lookup(char *idName)
 	if (found) {
 		return symbolTable+index;
 	} else {
-		yyinfo("SymbolTable not found!");
+		sprintf(buf, "Symbol \"%s\" not found\n", idName);
+		yyinfo(buf);
 		return NULL;
 	}
 }

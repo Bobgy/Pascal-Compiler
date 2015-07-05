@@ -8,8 +8,6 @@
 #include "y.tab.h"
 extern YYSTYPE yylval;
 
-int name_part = 0;
-
 int isInteger(char *s) {
     int head = 0;
     if (s[0]=='+' || s[0]=='-') head = 1;
@@ -20,6 +18,7 @@ int isInteger(char *s) {
     }
     return 1;
 }
+int waitForFuncName = 0;
 
 %}
 
@@ -113,7 +112,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {const}         { return CONST; }
 {equal}     { return EQUAL; }
 {sys_con}     { return SYS_CON; }
-{type}        { name_part = 1; return TYPE;}
+{type}        {return TYPE;}
 {lp}        {return LP;}
 {rp}        {return RP;}
 {lb}        {return LB;}
@@ -146,7 +145,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {comma}    {return COMMA;}
 {colon}        {return COLON;}
 {assign}    {return ASSIGN;}
-{begin}        {name_part = 0; return BEGIN_TOKEN;}
+{begin}        {return BEGIN_TOKEN;}
 {sys_proc}    {return SYS_PROC;}
 {read}        {return READ;}
 {if}        {return IF;}
@@ -173,15 +172,13 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {and}        {return AND;}
 {or}        {return OR;}
 {sys_funct}    {return SYS_FUNCT;}
-{var}        { name_part = 0; return VAR;}
+{var}        {return VAR;}
 {function} {
-    push();
-    name_part = 0;
+    waitForFuncName = 1;
     return FUNCTION;
 }
 {procedure} {
-    push();
-    name_part = 0;
+    waitForFuncName = 1;
     return PROCEDURE;
 }
 {while}        {return WHILE;}
@@ -203,6 +200,10 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
         if (noDot) {
             yylval = createTreeNodeConstant();
             yylval->attr.symbolName = strAllocCopy(yytext);
+            if (waitForFuncName) {
+                waitForFuncName = 0;
+                push(yytext);
+            }
 			return NAME;
         }
     }
