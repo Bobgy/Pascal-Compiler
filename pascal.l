@@ -7,6 +7,11 @@
 #include "util.h"
 #include "y.tab.h"
 extern YYSTYPE yylval;
+#ifdef __cplusplus
+    #define YYINPUT yyinput
+#else
+    #define YYINPUT input
+#endif
 
 int isInteger(char *s) {
     int head = 0;
@@ -86,7 +91,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 // brackets comment
     char c;
     while (1) {
-        c = input();
+        c = YYINPUT();
         if (c=='}') break;
     }
 }
@@ -98,7 +103,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
     char c;
     int cnt = 0;
     while (1) {
-        c = input();
+        c = YYINPUT();
         if (c=='\'') break;
         ++cnt;
     }

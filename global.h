@@ -1,12 +1,7 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
+#include <bits/stdc++.h>
 
 int yylex();
 int yyparse();
