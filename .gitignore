@@ -1,18 +1,25 @@
+# configure file for compiler
+.config
+
+# temporary files
 *~
 *.output
 *.out
 *.o
+
+# log
 log
 *.log
 
 # vim
 *.swp
 
-# intermidiate files of clang and llvm
+# intermediate files of clang and llvm
 *.bc
 *.ll
 *.s
 
+# generated c files
 lex.yy.c
 y.tab.c
 y.tab.h

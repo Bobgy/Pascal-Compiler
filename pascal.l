@@ -1,8 +1,4 @@
 %{
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include "global.h"
 #include "util.h"
 #include "y.tab.h"
@@ -113,9 +109,9 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 
 {dot}         { return DOT; }
 {program}     { return PROGRAM; }
-{semi}         { return SEMI; }
-{const}         { return CONST; }
-{equal}     { return EQUAL; }
+{semi}        { return SEMI; }
+{const}       { return CONST; }
+{equal}       { return EQUAL; }
 {sys_con}     { return SYS_CON; }
 {type}        {return TYPE;}
 {lp}        {return LP;}
@@ -207,7 +203,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             yylval->attr.symbolName = strAllocCopy(yytext);
             if (waitForFuncName) {
                 waitForFuncName = 0;
-                push(yytext);
+                pushFuncContext(yytext);
             }
 			return NAME;
         }

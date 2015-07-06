@@ -2,6 +2,7 @@
 #define _GLOBAL_H_
 
 #include <bits/stdc++.h>
+using namespace std;
 
 int yylex();
 int yyparse();
@@ -47,9 +48,9 @@ typedef enum {
 	WHILE_STMT
 } StmtType;
 
-typedef struct treeNode {
-	struct treeNode *child; // for exp
-	struct treeNode *sibling; // for stmt
+struct TreeNode {
+	struct TreeNode *child; // for exp
+	struct TreeNode *sibling; // for stmt
 	NodeKind nodeKind; // STMTKIND, EXPKIND
 	union {
 		StmtType stmtType;
@@ -60,10 +61,10 @@ typedef struct treeNode {
 		SymbolValue value; // constant, remember check sumbolType first
 		char* symbolName; // symbol name, type name, function/procedure name
 		int size; // array size
-		char* assembly; //generated assembly, NULL means no code
+		string assembly; //generated assembly, NULL means no code
 	} attr;
 	SymbolType symbolType;
-} TreeNode;
+};
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
 

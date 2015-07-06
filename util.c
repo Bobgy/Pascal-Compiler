@@ -1,38 +1,27 @@
+#include "global.h"
 #include "util.h"
 
 char buf[MAX_LENGTH*10];
 char path[MAX_LENGTH];
+stack<FuncContext> funcContext;
 int depth = 0;
 int isGlobal = 1;
-Stack stack[MAX_LENGTH];
 
-void push(char *func) {
+void pushFuncContext(char *func) {
 	strCatPath(path, func);
+
     yyinfo("Entering path:");
     yyinfo(path);
 	yyinfo("\n");
+
     //leaving global region
     isGlobal = 0;
-	stack[++depth].initList = NULL;
-	top()->paramCount = 0;
+
+	funcContext.push(FuncContext());
 }
 
-void pop() {
-	free(stack[depth--].initList);
-}
-
-Stack *top() {
-	return &stack[depth];
-}
-
-void pushInitList(char *p) {
-	char *s = top()->initList;
-	if (s == NULL) {
-		top()->initList = strAllocCopy(p);
-	} else {
-		top()->initList = strAllocCat(p, s);
-		free(s);
-	}
+void popFuncContext() {
+	funcContext.pop();
 }
 
 void yyerror(char *s)
@@ -97,7 +86,7 @@ SymbolNode *lookup(char *idName)
 
 TreeNode *createTreeNodeStmt(StmtType stmtType)
 {
-	TreeNode *p = (TreeNode*)malloc(sizeof(TreeNode));
+	TreeNode *p = new TreeNode;
 	if (p==NULL) {
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
@@ -105,13 +94,12 @@ TreeNode *createTreeNodeStmt(StmtType stmtType)
 	p->nodeKind = STMTKIND;
 	p->kind.stmtType = stmtType;
 	p->child = p->sibling = NULL;
-	p->attr.assembly = NULL;
 	return p;
 }
 
 TreeNode *createTreeNodeConstant()
 {
-	TreeNode *p = (TreeNode*)malloc(sizeof(TreeNode));
+	TreeNode *p = new TreeNode;
 	if (p==NULL) {
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
@@ -119,14 +107,13 @@ TreeNode *createTreeNodeConstant()
 	p->nodeKind = EXPKIND;
 	p->kind.expKind = CONSTKIND;
 	p->child = p->sibling = NULL;
-	p->attr.assembly = NULL;
 	return p;
 }
 
 TreeNode *createTreeNodeExp(Expression T)
 // parameter size is only for ARRAYKIND
 {
-	TreeNode *p = (TreeNode*)malloc(sizeof(TreeNode));
+	TreeNode *p = new TreeNode;
 	if (p==NULL) {
 		yyerror("Malloc TreeNode Failed!\n");
 		return NULL;
@@ -159,7 +146,6 @@ TreeNode *createTreeNodeExp(Expression T)
 			break;
 	}
 	p->child = p->sibling = NULL;
-	p->attr.assembly = NULL;
 	return p;
 }
 
@@ -212,17 +198,10 @@ char *asmParseType(TreeNode *p) {
 }
 
 //concatenate assembly of a node's siblings
-char *asmCatSiblin(TreeNode *p) {
-	int totLen = 0;
-	TreeNode *t;
-	for (t = p; t != NULL; t = t->sibling) {
-		char *s = t->attr.assembly;
-		if (s != NULL) totLen += strlen(s);
-	}
-	char *ret = strAlloc(totLen + 1);
-	for (t = p; t != NULL; t = t->sibling) {
-		char *s = t->attr.assembly;
-		if (s != NULL) strcat(ret, t->attr.assembly);
+string asmCatSiblin(TreeNode *p) {
+	string ret;
+	for (TreeNode *t = p; t != NULL; t = t->sibling) {
+		ret += t->attr.assembly;
 	}
 	return ret;
 }

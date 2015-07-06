@@ -2,19 +2,23 @@
 #define _UTIL_H_
 #include "global.h"
 
-extern int depth;
-typedef struct {
-	char *initList;
-	int paramCount;
-} Stack;
-extern Stack stack[MAX_LENGTH];
+class FuncContext {
+public:
+	string mInitList;
+	int mParamCount;
+	FuncContext(): mParamCount(0) {
+		mInitList = "";
+	}
+
+};
+//function context
+extern stack<FuncContext> funcContext;
+
 extern char buf[MAX_LENGTH*10];
 extern char path[MAX_LENGTH];
 extern int isGlobal;
-void push(char *s);
-void pop();
-void pushInitList(char *p);
-Stack *top();
+void pushFuncContext(char *s);
+void popFuncContext();
 
 int yylex();
 int yylex(void);
@@ -53,7 +57,7 @@ void strParentPath(char *path);
 char *asmParseType(TreeNode *);
 
 //concatenate assembly of a node's siblings
-char *asmCatSiblin(TreeNode *p);
+string asmCatSiblin(TreeNode *p);
 
 //temporary storage for string pointers
 extern char *strList[MAX_LENGTH];

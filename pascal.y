@@ -20,18 +20,15 @@ Expression NULL_EXP;
 %token SYS_PROC SYS_TYPE READ // see doc
 
 %%
-program_stmt: program_head  routine  DOT {
-    $$ = createTreeNodeStmt(PROGRAM_STMT);
-    syntaxTreeRoot = $$;
-    $$->child = $1;
-    $1->sibling = $2;
-    if ($2->attr.assembly != NULL) {
-        printf("%s\n", $2->attr.assembly);
-    } else {
-        printf("ERROR: NULL program\n");
-    }
-}
-;
+program_stmt:
+    program_head  routine  DOT {
+        $$ = createTreeNodeStmt(PROGRAM_STMT);
+        syntaxTreeRoot = $$;
+        $$->child = $1;
+        $1->sibling = $2;
+        printf("%s\n", $2->attr.assembly.c_str());
+    };
+
 program_head: PROGRAM  NAME  SEMI { // just skipped
     $$ = createTreeNodeStmt(PROGRAM_HEAD);
 }
@@ -230,10 +227,7 @@ var_decl_list :
         $$ = createTreeNodeStmt(VAR_DECL_LIST);
         $$->child = $1;
         $1->sibling = $2;
-        $$->attr.assembly = strAllocCat(
-            $1->attr.assembly,
-            $2->attr.assembly
-        );
+        $$->attr.assembly = $1->attr.assembly + $2->attr.assembly;
     }
     | var_decl {
         $$ = createTreeNodeStmt(VAR_DECL_LIST);
@@ -248,16 +242,13 @@ var_decl:
         char *type = asmParseType($3);
         int i = 0;
         for (TreeNode *p = $1; p != NULL; p = p->child, ++i) {
-            char *name = p->attr.symbolName;
-            if (isGlobal) {
-                sprintf(buf, "@%s%s = %s\n", path, name, type);
-            } else {
-                sprintf(buf, "%%%s%s = alloca %s\n", path, name, type);
-            }
-            strList[i] = strAllocCopy(buf);
+            sprintf(
+                buf,
+                isGlobal ? "@%s%s = %s\n" : "%%%s%s = alloca %s\n",
+                path, p->attr.symbolName, type
+            );
+            $$->attr.assembly += buf;
         }
-        $$->attr.assembly = strCatList(i);
-        while(~--i)free(strList[i]);
         for (TreeNode *p = $1; p != NULL; p = p->child) {
             insert(strAllocCat(path, p->attr.symbolName), 0, $3);
         }
@@ -290,12 +281,9 @@ function_decl :
         yyinfo(path);
 
         // asm
-        strList[0] = $1->attr.assembly;
-        strList[1] = $3->attr.assembly;
-        strList[2] = "}";
-        $$->attr.assembly = strCatList(3);
+        $$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
 
-        pop();
+        popFuncContext();
     };
 function_head :
     FUNCTION  NAME  parameters  COLON  simple_type_decl {
@@ -307,15 +295,10 @@ function_head :
         $3->sibling = $5;
 
         // asm
-        strList[0] = "define ";
-        strList[1] = asmParseType($5);
-        strList[2] = " @";
-        strList[3] = $$->attr.symbolName;
-        strList[4] = "(";
-        strList[5] = $3->attr.assembly;
-        strList[6] = "){\n";
-        strList[7] = top()->initList;
-        $$->attr.assembly = strCatList(8);
+        $$->attr.assembly = string("define ") + asmParseType($5)
+                          + " @" + $$->attr.symbolName + "("
+                          + $3->attr.assembly + "){\n"
+                          + funcContext.top().mInitList;
     };
 procedure_decl :
     procedure_head  SEMI  sub_routine  SEMI {
@@ -327,12 +310,9 @@ procedure_decl :
         yyinfo(path);
 
         //asm TODO
-        strList[0] = $1->attr.assembly;
-        strList[1] = $3->attr.assembly;
-        strList[2] = "}";
-        $$->attr.assembly = strCatList(3);
+        $$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
 
-        pop();
+        popFuncContext();
     };
 procedure_head :
     PROCEDURE NAME parameters {
@@ -342,14 +322,11 @@ procedure_head :
         $$->child = $3;
 
         // asm
-        strList[0] = "define void @";
-        strList[1] = $$->attr.symbolName;
-        strList[2] = "(";
-        strList[3] = $3->attr.assembly;
-        strList[4] = "){\n";
-        strList[5] = top()->initList;
-        $$->attr.assembly = strCatList(6);
-        //free(top()->initList);
+        $$->attr.assembly =
+            string("define void @")
+            + $$->attr.symbolName
+            + "(" + $3->attr.assembly + "){\n"
+            + funcContext.top().mInitList;
     };
 parameters:
     LP  para_decl_list  RP {
@@ -363,10 +340,7 @@ para_decl_list:
         $$ = createTreeNodeStmt(PARA_DECL_LIST);
         $$->child = $1;
         $1->sibling = $3;
-        sprintf(buf, "%s, %s", $1->attr.assembly, $3->attr.assembly);
-        $$->attr.assembly = strAllocCopy(buf);
-        free($1->attr.assembly);
-        free($3->attr.assembly);
+        $$->attr.assembly = $1->attr.assembly + ", " + $3->attr.assembly;
     }
     | para_type_list {
         $$ = createTreeNodeStmt(PARA_DECL_LIST);
@@ -390,7 +364,7 @@ para_type_list:
                 }
                 strList[i] = strAllocCopy(buf);
             } else {
-                cnt = ++top()->paramCount;
+                cnt = ++funcContext.top().mParamCount;
                 if (i) {
                     sprintf(buf, ", %%%d %s", cnt, type);
                 } else {
@@ -401,7 +375,7 @@ para_type_list:
                     buf, "%%%s = alloca %s\nstore %s %%%d, %s* %%%s\n",
                     name, type, type, cnt, type, name
                 );
-                pushInitList(buf);
+                funcContext.top().mInitList += buf;
             }
             insert(name, 0, $3);
         }
@@ -433,7 +407,9 @@ stmt_list:
         $$->child = $1;
         $1->sibling = $2;
     }
-    |;
+    | {
+        $$ = createTreeNodeStmt(STMT_LIST);
+    };
 stmt:
     INTEGER  COLON non_label_stmt {
         $$ = createTreeNodeStmt(STMT);

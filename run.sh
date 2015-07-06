@@ -1,3 +1,4 @@
+#!/bin/sh
 echo =========simple============
 ./y.tab.out < test/simple/simple.pas || exit
 echo ===========t2==============

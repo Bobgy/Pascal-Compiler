@@ -1,5 +1,6 @@
 LEX_TARGET := lex.yy
 YACC_TARGET := y.tab
+COMMON_HEADER := global.h util.h
 CC := g++
 COP := -std=c++11 -Wno-write-strings
 
@@ -14,16 +15,16 @@ $(LEX_TARGET).c: pascal.l
 $(LEX_TARGET).o: $(LEX_TARGET).c $(YACC_TARGET).c $(YACC_TARGET).h
 	$(CC) $(COP) -c $(LEX_TARGET).c
 
-$(YACC_TARGET).c $(YACC_TARGET).h: pascal.y util.h
-	"yacc" -dvt pascal.y
+$(YACC_TARGET).c $(YACC_TARGET).h: pascal.y $(COMMON_HEADER)
+	"yacc" -ydvt pascal.y
 
-$(YACC_TARGET).o: $(YACC_TARGET).c $(YACC_TARGET).h
+$(YACC_TARGET).o: $(YACC_TARGET).c $(YACC_TARGET).h $(COMMON_HEADER)
 	$(CC) $(COP) -c $(YACC_TARGET).c
 
-util.o: util.c util.h
+util.o: util.c $(COMMON_HEADER)
 	$(CC) $(COP) -c util.c
 
-main.o: main.c global.h
+main.o: main.c $(COMMON_HEADER)
 	$(CC) $(COP) -c main.c
 
 clean_o:
@@ -42,7 +43,7 @@ clean: clean_tmp clean_o clean_exe clean_gen_src
 
 clean_not_src: clean_tmp clean_o clean_exe
 
-utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c util.o util.h
+utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.c util.o $(COMMON_HEADER)
 	$(CC) $(COP) -c utils/test_lex.c -o utils/test_lex.o
 	$(CC) $(COP) utils/test_lex.o $(LEX_TARGET).o util.o -o utils/$(LEX_TARGET).out
 
