@@ -9,11 +9,11 @@
 You need to compile this project in Linux. The following instructions are for Ubuntu.
 
 ### dependencies
-- gcc
 - yacc
 - flex
-- clang
-- python (a python script is used to debug)
+- clang && llvm
+- python (a python script is used to test lex)
+- libedit-dev may be needed if you encounter compilation errors (`sudo apt-get install libedit-dev` in ubuntu)
 
 ### instructions
 
