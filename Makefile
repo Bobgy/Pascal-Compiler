@@ -7,10 +7,12 @@ LLVM_LD_OP := `llvm-config --ldflags --system-libs --libs core mcjit native`
 NO_WARNING := -Wno-write-strings -Wno-deprecated-register
 COP := -std=c++11 $(LLVM_C_OP) -O3 $(NO_WARNING)
 
+OBJS := main.o util.o code.o
+
 all: $(YACC_TARGET).out test
 
-$(YACC_TARGET).out: $(YACC_TARGET).o $(LEX_TARGET).o util.o main.o
-	$(CC) -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o util.o main.o $(LLVM_LD_OP)
+$(YACC_TARGET).out: $(YACC_TARGET).o $(LEX_TARGET).o $(OBJS)
+	$(CC) -o $(YACC_TARGET).out $(LEX_TARGET).o $(YACC_TARGET).o $(OBJS) $(LLVM_LD_OP)
 
 $(LEX_TARGET).cc: pascal.l
 	flex pascal.l && mv $(LEX_TARGET).c $(LEX_TARGET).cc
@@ -24,11 +26,8 @@ $(YACC_TARGET).cc $(YACC_TARGET).h: pascal.y $(COMMON_HEADER)
 $(YACC_TARGET).o: $(YACC_TARGET).cc $(YACC_TARGET).h $(COMMON_HEADER)
 	$(CC) $(COP) -c $(YACC_TARGET).cc
 
-util.o: util.cc $(COMMON_HEADER)
-	$(CC) $(COP) -c util.cc
-
-main.o: main.cc $(COMMON_HEADER)
-	$(CC) $(COP) -c main.cc
+%.o: %.cc $(COMMON_HEADER)
+	$(CC) $(COP) -c $< -o $@
 
 clean_o:
 	rm -f *.o

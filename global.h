@@ -31,7 +31,6 @@ using namespace llvm;
 int yylex();
 int yyparse();
 
-typedef enum {Element, Array, Function, Constant} SymbolKind;
 typedef union {
 	int integer;
 	double real;
@@ -39,6 +38,10 @@ typedef union {
 	unsigned char boolean;
 	char *string;
 } SymbolValue;
+typedef union {
+	Value* value;
+	Function* function;
+} CodeType;
 
 // Syntax Tree
 typedef enum {STMTKIND,EXPKIND} NodeKind;
@@ -94,6 +97,7 @@ struct TreeNode {
 		string assembly; //generated assembly, NULL means no code
 	} attr;
 	SymbolType symbolType;
+	CodeType genCode();
 };
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
