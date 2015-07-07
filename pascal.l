@@ -24,61 +24,61 @@ int waitForFuncName = 0;
 %}
 
 dot         "."
-program    "program"
+program     "program"
 semi        ";"
-const        "const"
-equal        "="
-sys_con        "true"|"false"|"maxint"
+const       "const"
+equal       "="
+sys_con     "true"|"false"|"maxint"
 type        "type"
-lp        "("
-rp        ")"
-lb        "["
-rb        "]"
-dotdot        ".."
-boolean   "boolean"
-char      "char"
-integer   "integer"
-real      "real"
-array        "array"
-of        "of"
-record        "record"
-end        "end"
-comma        ","
-colon        ":"
-assign        ":="
-begin        "begin"
+lp          "("
+rp          ")"
+lb          "["
+rb          "]"
+dotdot      ".."
+boolean     "boolean"
+char        "char"
+integer     "integer"
+real        "real"
+array       "array"
+of          "of"
+record      "record"
+end         "end"
+comma       ","
+colon       ":"
+assign      ":="
+begin       "begin"
 sys_proc    "write"|"writeln"
 read        "read"
-if        "if"
+if          "if"
 then        "then"
 else        "else"
-repeat        "repeat"
-until        "until"
-for        "for"
-do        "do"
-to        "to"
-downto        "downto"
+repeat      "repeat"
+until       "until"
+for         "for"
+do          "do"
+to          "to"
+downto      "downto"
 case        "case"
 goto        "goto"
-ge        ">="
-gt        ">"
-le        "<="
-lt        "<"
-unequal    "<>"
+ge          ">="
+gt          ">"
+le          "<="
+lt          "<"
+unequal     "<>"
 plus        "+"
-minus        "-"
-mul        "*"
-mod        "mod"
-div        "div"
-and        "and"
-or        "or"
-sys_funct    "abs"|"chr"|"odd"|"ord"|"pred"|"sqr"|"sqrt"|"succ"
-var        "var"
+minus       "-"
+mul         "*"
+mod         "mod"
+div         "div"
+and         "and"
+or          "or"
+sys_funct   "abs"|"chr"|"odd"|"ord"|"pred"|"sqr"|"sqrt"|"succ"
+var         "var"
 function    "function"
-procedure    "procedure"
-while        "while"
-not        "not"
-label        "label"
+procedure   "procedure"
+while       "while"
+not         "not"
+label       "label"
 word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 
 %%
@@ -107,18 +107,18 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
     else return CHAR;
 }
 
-{dot}         { return DOT; }
-{program}     { return PROGRAM; }
-{semi}        { return SEMI; }
-{const}       { return CONST; }
-{equal}       { return EQUAL; }
-{sys_con}     { return SYS_CON; }
+{dot}         {return DOT;}
+{program}     {return PROGRAM;}
+{semi}        {return SEMI;}
+{const}       {return CONST;}
+{equal}       {return EQUAL;}
+{sys_con}     {return SYS_CON;}
 {type}        {return TYPE;}
-{lp}        {return LP;}
-{rp}        {return RP;}
-{lb}        {return LB;}
-{rb}        {return RB;}
-{dotdot}    {return DOTDOT;}
+{lp}          {return LP;}
+{rp}          {return RP;}
+{lb}          {return LB;}
+{rb}          {return RB;}
+{dotdot}      {return DOTDOT;}
 {integer} {
     yylval = createTreeNodeStmt(TYPE_DECL);
     yylval->symbolType = TYPE_INTEGER;
@@ -139,41 +139,41 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
     yylval->symbolType = TYPE_REAL;
     return SYS_TYPE;
 }
-{array}        {return ARRAY;}
-{of}        {return OF;}
-{record}    {return RECORD;}
-{end}        {return END;}
-{comma}    {return COMMA;}
-{colon}        {return COLON;}
-{assign}    {return ASSIGN;}
-{begin}        {return BEGIN_TOKEN;}
+{array}       {return ARRAY;}
+{of}          {return OF;}
+{record}      {return RECORD;}
+{end}         {return END;}
+{comma}       {return COMMA;}
+{colon}       {return COLON;}
+{assign}      {return ASSIGN;}
+{begin}       {return BEGIN_TOKEN;}
 {sys_proc}    {return SYS_PROC;}
 {read}        {return READ;}
-{if}        {return IF;}
+{if}          {return IF;}
 {then}        {return THEN;}
 {else}        {return ELSE;}
-{repeat}    {return REPEAT;}
-{until}        {return UNTIL;}
-{for}        {return FOR;}
-{do}        {return DO;}
-{to}        {return TO;}
-{downto}    {return DOWNTO;}
+{repeat}      {return REPEAT;}
+{until}       {return UNTIL;}
+{for}         {return FOR;}
+{do}          {return DO;}
+{to}          {return TO;}
+{downto}      {return DOWNTO;}
 {case}        {return CASE;}
 {goto}        {return GOTO;}
-{ge}        {return GE;}
-{gt}        {return GT;}
-{le}        {return LE;}
-{lt}        {return LT;}
-{unequal}    {return UNEQUAL;}
+{ge}          {return GE;}
+{gt}          {return GT;}
+{le}          {return LE;}
+{lt}          {return LT;}
+{unequal}     {return UNEQUAL;}
 {plus}        {return PLUS;}
-{minus}    {return MINUS;}
-{mul}        {return MUL;}
-{mod}        {return MOD;}
-{div}        {return DIV;}
-{and}        {return AND;}
-{or}        {return OR;}
-{sys_funct}    {return SYS_FUNCT;}
-{var}        {return VAR;}
+{minus}       {return MINUS;}
+{mul}         {return MUL;}
+{mod}         {return MOD;}
+{div}         {return DIV;}
+{and}         {return AND;}
+{or}          {return OR;}
+{sys_funct}   {return SYS_FUNCT;}
+{var}         {return VAR;}
 {function} {
     waitForFuncName = 1;
     return FUNCTION;
@@ -182,9 +182,9 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
     waitForFuncName = 1;
     return PROCEDURE;
 }
-{while}        {return WHILE;}
-{not}        {return NOT;}
-{label}        {return LABEL;}
+{while}       {return WHILE;}
+{not}         {return NOT;}
+{label}       {return LABEL;}
 {word} {
     //figure whether it is ID/NAME/INTEGER/REAL
     //fprintf(stderr, "word: %s\n", yytext);
@@ -224,9 +224,9 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 break;
             }
             a[i] = yytext[i];
+            for (i = dot+1; i<n; ++i) {
         }
         if (dot>0 && dot!=n-1) {
-            for (i = dot+1; i<n; ++i) {
                 b[i-dot-1] = yytext[i];
             }
             if (isInteger(a) && isInteger(b)) {
