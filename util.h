@@ -56,9 +56,6 @@ void strParentPath(char *path);
 //parse tree to assembly type string
 char *asmParseType(TreeNode *);
 
-//concatenate assembly of a node's siblings
-string asmCatSiblin(TreeNode *p);
-
 //temporary storage for string pointers
 extern char *strList[MAX_LENGTH];
 //concatenate strings from global strList

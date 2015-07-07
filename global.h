@@ -1,11 +1,22 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
+// llvm headers
+#include "llvm/Analysis/Passes.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+//#include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/PassManager.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Transforms/Scalar.h"
+
+// stl headers
 #include <cctype>
 #include <cstdio>
 #include <map>
@@ -62,8 +73,14 @@ typedef enum {
 } StmtType;
 
 struct TreeNode {
-	struct TreeNode *child; // for exp
-	struct TreeNode *sibling; // for stmt
+	vector<TreeNode *> child;
+
+	// the derivation this node used, start from 1
+	// for example,
+	//   expression_list:
+	//       expression_list  COMMA  expression (derivation = 1)
+    //     | expression                         (derivation = 2)
+	unsigned derivation;
 	NodeKind nodeKind; // STMTKIND, EXPKIND
 	union {
 		StmtType stmtType;
@@ -71,7 +88,7 @@ struct TreeNode {
 	} kind;
 	struct {
 		OpType op; // operator
-		SymbolValue value; // constant, remember check sumbolType first
+		SymbolValue value; // constant, remember check symbolType first
 		char* symbolName; // symbol name, type name, function/procedure name
 		int size; // array size
 		string assembly; //generated assembly, NULL means no code
@@ -80,6 +97,10 @@ struct TreeNode {
 };
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
+extern Module *TheModule;
+extern IRBuilder<> Builder;
+extern map<string, AllocaInst *> NamedValues;
+extern FunctionPassManager *TheFPM;
 
 // symbol table
 #define SYMBOL_TABLE_SIZE 1000007

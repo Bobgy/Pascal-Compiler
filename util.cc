@@ -93,7 +93,6 @@ TreeNode *createTreeNodeStmt(StmtType stmtType)
 	}
 	p->nodeKind = STMTKIND;
 	p->kind.stmtType = stmtType;
-	p->child = p->sibling = NULL;
 	return p;
 }
 
@@ -106,7 +105,6 @@ TreeNode *createTreeNodeConstant()
 	}
 	p->nodeKind = EXPKIND;
 	p->kind.expKind = CONSTKIND;
-	p->child = p->sibling = NULL;
 	return p;
 }
 
@@ -145,7 +143,6 @@ TreeNode *createTreeNodeExp(Expression T)
 		default:
 			break;
 	}
-	p->child = p->sibling = NULL;
 	return p;
 }
 
@@ -195,15 +192,6 @@ char *asmParseType(TreeNode *p) {
 		default: yyerror("asmParseType: type not found");
 	}
 	return NULL;
-}
-
-//concatenate assembly of a node's siblings
-string asmCatSiblin(TreeNode *p) {
-	string ret;
-	for (TreeNode *t = p; t != NULL; t = t->sibling) {
-		ret += t->attr.assembly;
-	}
-	return ret;
 }
 
 //concatenate path
