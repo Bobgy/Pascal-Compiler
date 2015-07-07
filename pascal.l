@@ -209,37 +209,32 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
         }
     }
     else { //integer real
-        if (yytext[0]=='+' || yytext[0]=='-' && n>1) {
-
+        if (isInteger(yytext)) {
+            int x;
+            sscanf(yytext, "%d", &x);
+            yylval = createTreeNodeConstant();
+            yylval->attr.value.integer = x;
+            return INTEGER;
         }
-        else {
-            if (isInteger(yytext)) {
-                int x;
-                sscanf(yytext, "%d", &x);
+        char a[256] = {0}, b[256] = {0};
+        int dot = -1;
+        for (i = 0; i<n; ++i) {
+            if (yytext[i]=='.' || yytext[i]=='e' || yytext[i]=='E')  {
+                dot = i;
+                break;
+            }
+            a[i] = yytext[i];
+        }
+        if (dot>0 && dot!=n-1) {
+            for (i = dot+1; i<n; ++i) {
+                b[i-dot-1] = yytext[i];
+            }
+            if (isInteger(a) && isInteger(b)) {
+                double x;
+                sscanf(yytext, "%lf", &x);
                 yylval = createTreeNodeConstant();
-                yylval->attr.value.integer = x;
-                return INTEGER;
-            }
-            char a[256] = {0}, b[256] = {0};
-            int dot = -1;
-            for (i = 0; i<n; ++i) {
-                if (yytext[i]=='.' || yytext[i]=='e' || yytext[i]=='E')  {
-                    dot = i;
-                    break;
-                }
-                a[i] = yytext[i];
-            }
-            if (dot>0 && dot!=n-1) {
-                for (i = dot+1; i<n; ++i) {
-                    b[i-dot-1] = yytext[i];
-                }
-                if (isInteger(a) && isInteger(b)) {
-                    double x;
-                    sscanf(yytext, "%lf", &x);
-                    yylval = createTreeNodeConstant();
-                    yylval->attr.value.real = x;
-                    return REAL;
-                }
+                yylval->attr.value.real = x;
+                return REAL;
             }
         }
     }

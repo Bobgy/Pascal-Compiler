@@ -5,7 +5,7 @@ YYSTYPE yylval;
 SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 int main(){
 	int rt=-1;
-	while(rt=yylex()){
+	while((rt=yylex())){
 		printf("%d\n", rt);
 		switch(rt) {
 			case NAME:

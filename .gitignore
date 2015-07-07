@@ -20,6 +20,6 @@ log
 *.s
 
 # generated c files
-lex.yy.c
-y.tab.c
+lex.yy.cc
+y.tab.cc
 y.tab.h

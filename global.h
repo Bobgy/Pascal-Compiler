@@ -1,8 +1,20 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-#include <bits/stdc++.h>
+#include "llvm/IR/Verifier.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include <cctype>
+#include <cstdio>
+#include <map>
+#include <string>
+#include <vector>
+#include <stack>
+#include <iostream>
 using namespace std;
+using namespace llvm;
 
 int yylex();
 int yyparse();
