@@ -2,6 +2,7 @@
 #include "../y.tab.h"
 #include <stdio.h>
 YYSTYPE yylval;
+FuncContext *globalFuncContext;
 SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 int main(){
 	int rt=-1;

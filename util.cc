@@ -7,9 +7,36 @@ stack<FuncContext> funcContext;
 int depth = 0;
 int isGlobal = 1;
 
-void pushFuncContext(char *func) {
-	strCatPath(path, func);
+void FuncContext::insertName(const string &name, Code code) {
+	if(symbolTable.find(name) != symbolTable.end()){
+		yyerror("The name has already been declared");
+	}
+	symbolTable[name] = code;
+}
 
+Code getName(const string &name) {
+	auto table = &funcContext.top().symbolTable;
+	auto it = table->find(name);
+	if (it != table->end()) {
+		return it->second;
+	}
+	if (funcContext.size()>1) {
+		table = &globalFuncContext->symbolTable;
+		it = table->find(name);
+		if (it != table->end()) {
+			return it->second;
+		}
+	}
+	yyerror("name not found in symbol table");
+	return Code();
+}
+
+FuncContext *getFuncContext() {
+	assert(!funcContext.empty());
+	return &funcContext.top();
+}
+
+void pushFuncContext(char *func) {
     yyinfo("Entering path:");
     yyinfo(path);
 	yyinfo("\n");

@@ -38,10 +38,52 @@ typedef union {
 	unsigned char boolean;
 	char *string;
 } SymbolValue;
-typedef union {
-	Value* value;
-	Function* function;
-} CodeType;
+
+// a helper class that wraps around a union pointer
+// codeKind is the actual kind
+// value refer to llvm::Value
+// function refer to llvm::Function
+// type refer to llvm:Type
+class Code {
+public:
+	union {
+		Value *value;
+		Function *function;
+		Type *type;
+	};
+	enum CodeKind {
+		CODE_VALUE,
+		CODE_FUNCTION,
+		CODE_TYPE
+	} codeKind;
+	CodeKind getCodeKind() const {
+		return codeKind;
+	}
+	void setValue(Value *_) {
+		value = _;
+		codeKind = CODE_VALUE;
+	}
+	void setFunction(Function *_) {
+		function = _;
+		codeKind = CODE_FUNCTION;
+	}
+	void setType(Type *_) {
+		type = _;
+		codeKind = CODE_TYPE;
+	}
+	Value *getValue() {
+		assert(getCodeKind() == CODE_VALUE);
+		return value;
+	}
+	Function *getFunction() {
+		assert(getCodeKind() == CODE_FUNCTION);
+		return function;
+	}
+	Type *getType() {
+		assert(getCodeKind() == CODE_TYPE);
+		return type;
+	}
+};
 
 // Syntax Tree
 typedef enum {STMTKIND,EXPKIND} NodeKind;
@@ -97,7 +139,7 @@ struct TreeNode {
 		string assembly; //generated assembly, NULL means no code
 	} attr;
 	SymbolType symbolType;
-	CodeType genCode();
+	Code genCode();
 };
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree

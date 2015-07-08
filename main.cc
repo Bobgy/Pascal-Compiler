@@ -1,10 +1,12 @@
 #include "global.h"
+#include "util.h"
 #include <fstream>
 
 extern int yydebug;
 
 SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 TreeNode *syntaxTreeRoot;
+FuncContext *globalFuncContext;
 
 Module *TheModule;
 IRBuilder<> Builder(getGlobalContext());
@@ -60,7 +62,12 @@ int main()
 	// Set the global so the code gen can use this.
 	TheFPM = &OurFPM;
 
+	pushFuncContext("");
+	globalFuncContext = &funcContext.top();
+
 	yyparse();
+
+	popFuncContext();
 
 	TheFPM = NULL;
 

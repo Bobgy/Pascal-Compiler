@@ -1,8 +1,8 @@
 #include "global.h"
 #include "util.h"
 
-CodeType TreeNode::genCode() {
-    CodeType ret;
+Code TreeNode::genCode() {
+    Code ret;
     if (nodeKind == STMTKIND) {
         switch(kind.stmtType) {
             //FUNCTION  NAME  parameters  COLON  simple_type_decl
@@ -14,6 +14,39 @@ CodeType TreeNode::genCode() {
                                                        Doubles, false);
                 Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
                 */
+            }
+            case SIMPLE_TYPE_DECL: {
+                switch(derivation) {
+                    case 1: { //SYS_TYPE
+                        switch(symbolType){
+                            //case TYPE_VOID:
+                            case TYPE_INTEGER:
+                                ret.setType(Type::getInt32Ty(getGlobalContext()));
+                                return ret;
+                            case TYPE_BOOLEAN:
+                                ret.setType(Type::getInt32Ty(getGlobalContext()));
+                                return ret;
+                            case TYPE_REAL:
+                                ret.setType(Type::getDoubleTy(getGlobalContext()));
+                                return ret;
+                            //case TYPE_CHARACTER:
+                            //case TYPE_STRING
+                            default: yyerror("Undefined sys type!");
+                        }
+                    }
+                    case 2: { // NAME
+                        ret = getName(child[0]->attr.symbolName);
+                        return ret;
+                    }
+                    /*
+                    case 3: LP name_list RP
+                    case 4: const_value DOTDOT const_value
+                    case 5: MINUS const_value DOTDOT const_value
+                    case 6: MINUS const_value DOTDOT MINUS const_value
+                    case 7: NAME DOTDOT NAME
+                    */
+                    default: yyerror("Not defined type.");
+                }
             }
             default: yyerror("Unrecorded statement type");
         }
@@ -31,10 +64,10 @@ CodeType TreeNode::genCode() {
                 //TYPE_REAL, TYPE_CHARACTER, TYPE_STRING
                 switch(symbolType) {
                     case TYPE_INTEGER:
-                        ret.value = ConstantInt::get(
+                        ret.setValue(ConstantInt::get(
                             getGlobalContext(),
                             APInt(32, attr.value.integer, true)
-                        );
+                        ));
                         return ret;
                     default: yyerror("Unrecorded symbol type");
                 }
@@ -43,6 +76,6 @@ CodeType TreeNode::genCode() {
         }
     }
     yyerror("No code generated");
-    ret.value = NULL;
+    ret.setValue(NULL);
     return ret;
 }

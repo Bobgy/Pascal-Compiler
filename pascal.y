@@ -144,14 +144,18 @@ type_definition: NAME  EQUAL  type_decl  SEMI {
 ;
 type_decl:
     simple_type_decl {
-        $$ = $1;
+        $$ = createTreeNodeStmt(TYPE_DECL);
+        $$->child = {$1};
+        $$->derivation = 1;
     }
     |  array_type_decl {  // TODO-Bobgy
         $$ = createTreeNodeStmt(TYPE_DECL);
+        $$->derivation = 2;
         $$->child = {$1};
     }
     |  record_type_decl { // TODO-Bobgy
         $$ = createTreeNodeStmt(TYPE_DECL);
+        $$->derivation = 3;
         $$->child = {$1};
     };
 simple_type_decl: //TODO cannot determine which type
@@ -200,11 +204,12 @@ field_decl:
 ;
 name_list:
     name_list  COMMA  NAME {
-        $$ = $3;
-        $$->child = {$1};
+        $$ = $1;
+        $1->child.push_back($3);
     }
     | NAME {
-        $$ = $1;
+        $$ = createTreeNodeStmt(NAME_LIST);
+        $$->child = {$1};
     };
 var_part: VAR  var_decl_list {
         $$ = createTreeNodeStmt(VAR_PART);
@@ -230,22 +235,9 @@ var_decl:
     name_list  COLON  type_decl  SEMI {
         $$ = createTreeNodeStmt(VAR_DECL);
         $$->child = {$1, $3};
-        char *type = asmParseType($3);
-        int i = 0;
-        for (TreeNode *p = $1; p != NULL; ++i) {
-            sprintf(
-                buf,
-                isGlobal ? "@%s%s = %s\n" : "%%%s%s = alloca %s\n",
-                path, p->attr.symbolName, type
-            );
-            $$->attr.assembly += buf;
-            if (p->child.empty()) break;
-            else p = p->child[0];
-        }
-        for (TreeNode *p = $1; p != NULL; ) {
-            insert(strAllocCat(path, p->attr.symbolName), 0, $3);
-            if (p->child.empty()) break;
-            else p = p->child[0];
+        Code type = $3->genCode();
+        for (auto name: $1->child) {
+            getFuncContext()->insertName(name->attr.symbolName, type); //TODO
         }
     };
 routine_part:
@@ -279,7 +271,7 @@ function_decl :
 
         popFuncContext();
     };
-function_head :
+function_head:
     FUNCTION  NAME  parameters  COLON  simple_type_decl {
         $$ = createTreeNodeStmt(FUNCTION_HEAD);
         $$->attr.symbolName = strAllocCat(path, $2->attr.symbolName);
@@ -324,9 +316,13 @@ parameters:
     LP  para_decl_list  RP {
         $$ = createTreeNodeStmt(PARAMETERS);
         $$->child = {$2};
+        $$->derivation = 1;
         $$->attr.assembly = $2->attr.assembly;
     }
-    |;
+    | {
+        $$ = createTreeNodeStmt(PARAMETERS);
+        $$->derivation = 2;
+    };
 para_decl_list:
     para_decl_list  SEMI  para_type_list {
         $$ = createTreeNodeStmt(PARA_DECL_LIST);

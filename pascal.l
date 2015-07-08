@@ -120,22 +120,22 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {rb}          {return RB;}
 {dotdot}      {return DOTDOT;}
 {integer} {
-    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
     yylval->symbolType = TYPE_INTEGER;
     return SYS_TYPE;
 }
 {boolean} {
-    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
     yylval->symbolType = TYPE_BOOLEAN;
     return SYS_TYPE;
 }
 {char} {
-    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
     yylval->symbolType = TYPE_CHARACTER;
     return SYS_TYPE;
 }
 {real} {
-    yylval = createTreeNodeStmt(TYPE_DECL);
+    yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
     yylval->symbolType = TYPE_REAL;
     return SYS_TYPE;
 }
@@ -200,6 +200,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
         }
         if (noDot) {
             yylval = createTreeNodeConstant();
+            yylval->symbolType = TYPE_STRING;
             yylval->attr.symbolName = strAllocCopy(yytext);
             if (waitForFuncName) {
                 waitForFuncName = 0;

@@ -5,23 +5,29 @@
 class FuncContext {
 public:
 	string mInitList;
+	string funcName;
+	map<string, Code> symbolTable;
 	int mParamCount;
 	FuncContext(): mParamCount(0) {
 		mInitList = "";
 	}
-
+	void insertName(const string &name, Code code);
 };
+
 //function context
 extern stack<FuncContext> funcContext;
 
 extern char buf[MAX_LENGTH*10];
 extern char path[MAX_LENGTH];
 extern int isGlobal;
+
 void pushFuncContext(char *s);
 void popFuncContext();
+Code getName(const string &name);
+FuncContext *getFuncContext();
+extern FuncContext *globalFuncContext;
 
 int yylex();
-int yylex(void);
 void yyerror(char *s);
 void yyinfo(char *s);
 TreeNode *createTreeNodeStmt(StmtType);
