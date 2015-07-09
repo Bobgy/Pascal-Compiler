@@ -276,16 +276,10 @@ function_head:
     FUNCTION  NAME  parameters  COLON  simple_type_decl {
         $$ = createTreeNodeStmt(FUNCTION_HEAD);
         $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
-
         // function_head saved the name of function
         $$->child = {$3, $5};
 
-        /* asm
-        $$->attr.assembly = string("define ") + asmParseType($5)
-                          + " @" + $$->attr.symbolName + "("
-                          + $3->attr.assembly + "){\n"
-                          + funcContext.top().mInitList;
-        */
+        Code func = $$->genCode();
     };
 procedure_decl :
     procedure_head  SEMI  sub_routine  SEMI {
@@ -298,20 +292,14 @@ procedure_decl :
         popFuncContext();
     };
 procedure_head :
+    //$$->child = {parameters}
     PROCEDURE NAME parameters {
         $$ = createTreeNodeStmt(PROCEDURE_HEAD);
         $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
         // procedure_head saved the name of function
         $$->child = {$3};
 
-        // asm
-        /* temporary storage, won't be used later
-        $$->attr.assembly =
-            string("define void @")
-            + $$->attr.symbolName
-            + "(" + $3->attr.assembly + "){\n"
-            + funcContext.top().mInitList;
-        */
+        Code func = $$->genCode();
     };
 parameters:
     LP  para_decl_list  RP {

@@ -8,12 +8,14 @@ Code TreeNode::genCode() {
             case PROCEDURE_HEAD:
             //FUNCTION  NAME  parameters($0)  COLON  simple_type_decl($1)
             case FUNCTION_HEAD: {
+                bool isFunction = kind.stmtType == FUNCTION_HEAD;
+
                 // Make the function type
                 vector<Type *> args;
                 vector<string> names;
 
                 TreeNode *parameters       = child[0],
-                         *simple_type_decl = child[1];
+                         *simple_type_decl = isFunction ? child[1] : NULL;
 
                 for (auto &para_type_list: parameters->child) {
 
@@ -27,10 +29,9 @@ Code TreeNode::genCode() {
                     }
                 }
 
-                Type *retType =
-                    kind.stmtType == FUNCTION_HEAD ?
-                        simple_type_decl->genCode().getType()
-                      : Type::getVoidTy(getGlobalContext());
+                Type *retType = isFunction ?
+                    simple_type_decl->genCode().getType()
+                  : Type::getVoidTy(getGlobalContext());
 
                 FunctionType *FT = FunctionType::get(
                     retType, args,
@@ -53,6 +54,40 @@ Code TreeNode::genCode() {
                     AI->setName(name);
                     ++AI;
                 }
+
+                // Create a new basic block to start insertion into.
+                BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", F);
+                Builder.SetInsertPoint(BB);
+
+                // Create an alloca for each argument and register the argument
+                // in the symbol table so that references to it will succeed.
+                AI = F->arg_begin();
+                for (unsigned i=0; i < args.size(); ++i, ++AI) {
+                    // Create an alloca for this variable.
+                    IRBuilder<> tmp(&F->getEntryBlock(), F->getEntryBlock().begin());
+                    AllocaInst *alloca = tmp.CreateAlloca(args[i], 0, names[i].c_str());
+
+                    // Store the initial value into the alloca.
+                    Builder.CreateStore(AI, alloca);
+
+                    // Add arguments to variable symbol table.
+                    getFuncContext()->insertName(names[i], alloca);
+                }
+
+                /* TODO: finish function implementation
+                if (Value *RetVal = Body->Codegen()) {
+                    // Finish off the function.
+                    Builder.CreateRet(RetVal);
+
+                    // Validate the generated code, checking for consistency.
+                    verifyFunction(*TheFunction);
+
+                    // Optimize the function.
+                    TheFPM->run(*TheFunction);
+
+                    return TheFunction;
+                }
+                */
                 return Code(F);
             }
 
