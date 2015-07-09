@@ -4,16 +4,58 @@
 Code TreeNode::genCode() {
     if (nodeKind == STMTKIND) {
         switch(kind.stmtType) {
-            //FUNCTION  NAME  parameters  COLON  simple_type_decl
+            //PROCEDURE  NAME  parameters($0)
+            case PROCEDURE_HEAD:
+            //FUNCTION  NAME  parameters($0)  COLON  simple_type_decl($1)
             case FUNCTION_HEAD: {
-                // Make the function type:  double(double,double) etc.
-                /*std::vector<Type*> funcType(Args.size(),
-                                             Type::getDoubleTy(getGlobalContext()));
-                FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()),
-                                                       Doubles, false);
-                Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
-                */
+                // Make the function type
+                vector<Type *> args;
+                vector<string> names;
+
+                TreeNode *parameters       = child[0],
+                         *simple_type_decl = child[1];
+
+                for (auto &para_type_list: parameters->child) {
+
+                    TreeNode *var_para_list    = para_type_list->child[0],
+                             *simple_type_decl = para_type_list->child[1];
+
+                    Type *type = simple_type_decl->genCode().getType();
+                    for (auto &name: var_para_list->child) {
+                        args.push_back(type);
+                        names.push_back(name->attr.symbolName);
+                    }
+                }
+
+                Type *retType =
+                    kind.stmtType == FUNCTION_HEAD ?
+                        simple_type_decl->genCode().getType()
+                      : Type::getVoidTy(getGlobalContext());
+
+                FunctionType *FT = FunctionType::get(
+                    retType, args,
+                    false //isVarArg, TODO
+                );
+
+                Function *F = Function::Create(
+                    FT, Function::ExternalLinkage,
+                    attr.symbolName, TheModule
+                );
+
+                // check whether F is conflicting existing functions
+                if (F->getName() != attr.symbolName) {
+                    sprintf(buf, "Redeclaration of function \"%s\"\n", attr.symbolName);
+                    yyerror(buf);
+                }
+
+                auto AI = F->arg_begin();
+                for (auto &name: names) {
+                    AI->setName(name);
+                    ++AI;
+                }
+                return Code(F);
             }
+
             case SIMPLE_TYPE_DECL: {
                 DEBUG_INFO("generating SIMPLE_TYPE_DECL\n");
                 switch(derivation) {

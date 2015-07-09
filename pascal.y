@@ -70,7 +70,7 @@ const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
             $$->child = {$1, $4};
             // add to symbol table
             char *idName = $2->attr.symbolName;
-            insert(strAllocCat(path,idName),0,$4);
+            //insert(strAllocCat(path,idName),0,$4);
         }
         |  NAME  EQUAL  const_value  SEMI {
             $3->attr.symbolName = strAllocCopy($1->attr.symbolName);
@@ -79,7 +79,7 @@ const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
             $$->child = {$3};
             // add to symbol table
             char *idName = $1->attr.symbolName;
-            insert(strAllocCat(path,idName),0,$3);
+            //insert(strAllocCat(path,idName),0,$3);
         }
 ;
 const_value:
@@ -272,9 +272,10 @@ function_decl :
         popFuncContext();
     };
 function_head:
+    //$$->child = {parameters, simple_type_decl}
     FUNCTION  NAME  parameters  COLON  simple_type_decl {
         $$ = createTreeNodeStmt(FUNCTION_HEAD);
-        $$->attr.symbolName = strAllocCat(path, $2->attr.symbolName);
+        $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
 
         // function_head saved the name of function
         $$->child = {$3, $5};
@@ -314,47 +315,53 @@ procedure_head :
     };
 parameters:
     LP  para_decl_list  RP {
-        $$ = createTreeNodeStmt(PARAMETERS);
-        $$->child = {$2};
+        $$ = $2;
+        $$->setStmtType(PARAMETERS);
         $$->derivation = 1;
-        $$->attr.assembly = $2->attr.assembly;
     }
     | {
         $$ = createTreeNodeStmt(PARAMETERS);
         $$->derivation = 2;
     };
 para_decl_list:
+    //$$->child = {para_type_list0, para_type_list1, ...}
     para_decl_list  SEMI  para_type_list {
-        $$ = createTreeNodeStmt(PARA_DECL_LIST);
-        $$->child = {$1, $3};
-        $$->attr.assembly = $1->attr.assembly + ", " + $3->attr.assembly;
+        $$ = $1;
+        $$->child.push_back($3);
     }
+    //$$->child = {para_type_list}
     | para_type_list {
         $$ = createTreeNodeStmt(PARA_DECL_LIST);
         $$->child = {$1};
-        $$->attr.assembly = $1->attr.assembly;
     };
 para_type_list:
+    //$$->child = {var_para_list, simple_type_decl};
     var_para_list COLON  simple_type_decl {
         $$ = createTreeNodeStmt(PARA_TYPE_LIST);
-        $$->derivation = 1;
+        $$->derivation = $1->derivation;
         $$->child = {$1, $3};
-        Code type = $3->genCode();
+        //Code type = $3->genCode();
 
         //$1->child[0] is name_list
         //name_list->child is the names
+        /* TODO add to code.cc/genCode/FUNCTION_DECL
         for (auto name: $1->child[0]->child) {
             getFuncContext()->insertName(name->attr.symbolName, type);
         }
+        */
     };
 var_para_list:
+    //$$->child = {name0, name1, ...}
     VAR name_list { // pass by reference
-        $$ = createTreeNodeStmt(VAR_VAR_PARA_LIST);
-        $$->child = {$2};
+        $$ = $2;
+        $$->setStmtType(VAR_PARA_LIST);
+        $$->derivation = 1;
     };
+    //$$->child = {name0, name1, ...}
     | name_list { // pass by value
-        $$ = createTreeNodeStmt(VAR_PARA_LIST);
-        $$->child = {$1};
+        $$ = $1;
+        $$->setStmtType(VAR_PARA_LIST);
+        $$->derivation = 2;
     };
 routine_body: compound_stmt {
                 $$ = createTreeNodeStmt(ROUTINE_BODY);

@@ -2,7 +2,6 @@
 #include "util.h"
 
 char buf[MAX_LENGTH*10];
-char path[MAX_LENGTH];
 stack<FuncContext> funcContext;
 int isGlobal = 1;
 
@@ -52,7 +51,8 @@ void pushFuncContext(char *func) {
     //leaving global region
     isGlobal = 0;
 
-	funcContext.push(FuncContext(func));
+	string basePath = funcContext.empty() ? "" : funcContext.top().path;
+	funcContext.push(FuncContext(func, basePath+func+"$"));
 }
 
 void popFuncContext() {

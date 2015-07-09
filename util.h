@@ -6,8 +6,8 @@ class FuncContext {
 private:
 	map<string, Code> symbolTable;
 public:
-	string funcName;
-	FuncContext(const string &name): funcName(name) {
+	string funcName, path;
+	FuncContext(const string &name, const string &path): funcName(name), path(path) {
 		// do nothing
 	}
 	void insertName(const string &name, Code code);
@@ -25,7 +25,6 @@ public:
 extern stack<FuncContext> funcContext;
 
 extern char buf[MAX_LENGTH*10];
-extern char path[MAX_LENGTH];
 extern int isGlobal;
 
 void pushFuncContext(char *s);
