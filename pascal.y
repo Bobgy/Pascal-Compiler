@@ -158,12 +158,14 @@ type_decl:
     };
 simple_type_decl: //TODO cannot determine which type
     SYS_TYPE { // "boolean", "char", "integer", "real"
-        $$ = yylval;
+        $$ = $1;
+        $$->setStmtType(SIMPLE_TYPE_DECL);
         $$->derivation = 1;
         // type is in $$->symbolType
     }
     |  NAME {
-        $$ = lookup($1->attr.symbolName)->treeNode;
+        $$ = $1;
+        $$->setStmtType(SIMPLE_TYPE_DECL);
         $$->derivation = 2;
     }
     |  LP  name_list  RP {
@@ -582,9 +584,12 @@ factor: NAME {
         $$ = $1;
     }
     |  NAME  LP  args_list  RP {
-        TreeNode *p = lookup($1->attr.symbolName)->treeNode;
-        $$ = createTreeNodeExp(NULL_EXP); //p->treeNode->kind.expKind,$1,0,p->treeNode->symbolType,p->treeNode->attr.size
-        $$->child = {$3};
+        Expression expArgs;
+        expArgs.expKind = FUNCKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->derivation = 2;
+        $$->child.push_back($3);
     }
     |  SYS_FUNCT { //"abs", "chr", "odd", "ord", "pred", "sqr", "sqrt", "succ"
         $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,TYPE_INTEGER

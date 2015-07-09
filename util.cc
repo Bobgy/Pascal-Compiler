@@ -159,18 +159,15 @@ TreeNode *createTreeNodeExp(Expression T)
 			p->attr.op = T.op;
 			break;
 		IDKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
-			strcpy(p->attr.symbolName, T.symbolName);
+			p->attr.symbolName = strAllocCopy(T.symbolName);
 			p->symbolType = T.symbolType;
 			break;
 		FUNCKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
-			strcpy(p->attr.symbolName, T.symbolName);
+			p->attr.symbolName = strAllocCopy(T.symbolName);
 			p->symbolType = T.symbolType;
 			break;
 		ARRAYKIND:
-			p->attr.symbolName = (char*)malloc(sizeof(T.symbolName));
-			strcpy(p->attr.symbolName, T.symbolName);
+			p->attr.symbolName = strAllocCopy(T.symbolName);
 			p->symbolType = T.symbolType;
 			p->attr.size = T.size;
 			break;

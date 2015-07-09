@@ -150,6 +150,14 @@ struct TreeNode {
 	} attr;
 	SymbolType symbolType;
 	Code genCode();
+	void setStmtType(StmtType stmtType) {
+		nodeKind = STMTKIND;
+		kind.stmtType = stmtType;
+	}
+	void setExpType(ExpKind expKind) {
+		nodeKind = EXPKIND;
+		kind.expKind = expKind;
+	}
 };
 
 extern TreeNode *syntaxTreeRoot; // Root of Syntax Tree
