@@ -62,7 +62,7 @@ int main()
 	// Set the global so the code gen can use this.
 	TheFPM = &OurFPM;
 
-	pushFuncContext("");
+	pushFuncContext("@global");
 	globalFuncContext = &funcContext.top();
 
 	yyparse();

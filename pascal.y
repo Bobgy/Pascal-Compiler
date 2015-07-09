@@ -144,9 +144,7 @@ type_definition: NAME  EQUAL  type_decl  SEMI {
 ;
 type_decl:
     simple_type_decl {
-        $$ = createTreeNodeStmt(TYPE_DECL);
-        $$->child = {$1};
-        $$->derivation = 1;
+        $$ = $1;
     }
     |  array_type_decl {  // TODO-Bobgy
         $$ = createTreeNodeStmt(TYPE_DECL);
@@ -161,15 +159,20 @@ type_decl:
 simple_type_decl: //TODO cannot determine which type
     SYS_TYPE { // "boolean", "char", "integer", "real"
         $$ = yylval;
+        $$->derivation = 1;
         // type is in $$->symbolType
     }
     |  NAME {
         $$ = lookup($1->attr.symbolName)->treeNode;
+        $$->derivation = 2;
     }
-    |  LP  name_list  RP
+    |  LP  name_list  RP {
+        yyerror("(simple_type_decl: LP name_list RP) not implemented!");
+    }
     |  const_value  DOTDOT  const_value {  // just need this to pass test
         $$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
         $$->attr.value.integer = $3->attr.value.integer;
+        $$->derivation = 4;
     }
     |  MINUS  const_value  DOTDOT  const_value
     |  MINUS  const_value  DOTDOT  MINUS  const_value
@@ -234,6 +237,7 @@ var_decl_list :
 var_decl:
     name_list  COLON  type_decl  SEMI {
         $$ = createTreeNodeStmt(VAR_DECL);
+        $$->derivation = 1;
         $$->child = {$1, $3};
         Code type = $3->genCode();
         for (auto name: $1->child) {
@@ -262,12 +266,6 @@ function_decl :
     function_head  SEMI  sub_routine  SEMI {
         $$ = createTreeNodeStmt(FUNCTION_DECL);
         $$->child = {$1, $3};
-        strParentPath(path);
-        yyinfo("Leaving path:");
-        yyinfo(path);
-
-        // asm
-        $$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
 
         popFuncContext();
     };
@@ -279,22 +277,20 @@ function_head:
         // function_head saved the name of function
         $$->child = {$3, $5};
 
-        // asm
+        /* asm
         $$->attr.assembly = string("define ") + asmParseType($5)
                           + " @" + $$->attr.symbolName + "("
                           + $3->attr.assembly + "){\n"
                           + funcContext.top().mInitList;
+        */
     };
 procedure_decl :
     procedure_head  SEMI  sub_routine  SEMI {
         $$ = createTreeNodeStmt(PROCEDURE_DECL);
         $$->child = {$1, $3};
-        strParentPath(path);
-        yyinfo("Leaving path:");
-        yyinfo(path);
 
         //asm TODO
-        $$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
+        //$$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
 
         popFuncContext();
     };
@@ -306,11 +302,13 @@ procedure_head :
         $$->child = {$3};
 
         // asm
+        /* temporary storage, won't be used later
         $$->attr.assembly =
             string("define void @")
             + $$->attr.symbolName
             + "(" + $3->attr.assembly + "){\n"
             + funcContext.top().mInitList;
+        */
     };
 parameters:
     LP  para_decl_list  RP {
@@ -337,38 +335,15 @@ para_decl_list:
 para_type_list:
     var_para_list COLON  simple_type_decl {
         $$ = createTreeNodeStmt(PARA_TYPE_LIST);
+        $$->derivation = 1;
         $$->child = {$1, $3};
-        char *type = asmParseType($3);
-        int i = 0, cnt;
-        for (TreeNode *p = $1->child[0]; p != NULL; ++i) {
-            char *name = strAllocCat(path, p->attr.symbolName);
-            if ($1->kind.stmtType == VAR_VAR_PARA_LIST) {
-                if (i) {
-                    sprintf(buf, ", %%%s %s", name, type);
-                } else {
-                    sprintf(buf, "%%%s %s", name, type);
-                }
-                strList[i] = strAllocCopy(buf);
-            } else {
-                cnt = ++funcContext.top().mParamCount;
-                if (i) {
-                    sprintf(buf, ", %%%d %s", cnt, type);
-                } else {
-                    sprintf(buf, "%%%d %s", cnt, type);
-                }
-                strList[i] = strAllocCopy(buf);
-                sprintf(
-                    buf, "%%%s = alloca %s\nstore %s %%%d, %s* %%%s\n",
-                    name, type, type, cnt, type, name
-                );
-                funcContext.top().mInitList += buf;
-            }
-            insert(name, 0, $3);
-            if (p->child.empty()) break;
-            else p = p->child[0];
+        Code type = $3->genCode();
+
+        //$1->child[0] is name_list
+        //name_list->child is the names
+        for (auto name: $1->child[0]->child) {
+            getFuncContext()->insertName(name->attr.symbolName, type);
         }
-        $$->attr.assembly = strCatList(i);
-        while(~--i)free(strList[i]);
     };
 var_para_list:
     VAR name_list { // pass by reference
@@ -604,12 +579,7 @@ term: term  MUL  factor {
     }
 ;
 factor: NAME {
-        char *name = $1->attr.symbolName, *pathName;
-        SymbolNode *p = lookup(pathName = strAllocCat(path, name));
-        if (p == NULL) p = lookup(name);
-        if (p == NULL) yyerror("symbol not found");
-        $$ = p->treeNode;
-        free(pathName);
+        $$ = $1;
     }
     |  NAME  LP  args_list  RP {
         TreeNode *p = lookup($1->attr.symbolName)->treeNode;

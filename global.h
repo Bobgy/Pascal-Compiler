@@ -30,6 +30,8 @@ using namespace llvm;
 
 int yylex();
 int yyparse();
+extern int yydebug;
+#define DEBUG_INFO(x) do { if(yydebug)yyinfo(x); } while(0)
 
 typedef union {
 	int integer;
@@ -46,41 +48,49 @@ typedef union {
 // type refer to llvm:Type
 class Code {
 public:
+	enum CodeKind {
+		UNDEFINED,
+		VALUE,
+		FUNCTION,
+		TYPE
+	};
+private:
 	union {
 		Value *value;
 		Function *function;
 		Type *type;
 	};
-	enum CodeKind {
-		CODE_VALUE,
-		CODE_FUNCTION,
-		CODE_TYPE
-	} codeKind;
+	CodeKind codeKind;
+public:
+	Code(): codeKind(UNDEFINED) {}
+	Code(Value *_) { setValue(_); }
+	Code(Function *_) { setFunction(_); }
+	Code(Type *_) { setType(_); }
 	CodeKind getCodeKind() const {
 		return codeKind;
 	}
 	void setValue(Value *_) {
 		value = _;
-		codeKind = CODE_VALUE;
+		codeKind = Code::VALUE;
 	}
 	void setFunction(Function *_) {
 		function = _;
-		codeKind = CODE_FUNCTION;
+		codeKind = Code::FUNCTION;
 	}
 	void setType(Type *_) {
 		type = _;
-		codeKind = CODE_TYPE;
+		codeKind = Code::TYPE;
 	}
 	Value *getValue() {
-		assert(getCodeKind() == CODE_VALUE);
+		assert(getCodeKind() == Code::VALUE);
 		return value;
 	}
 	Function *getFunction() {
-		assert(getCodeKind() == CODE_FUNCTION);
+		assert(getCodeKind() == Code::FUNCTION);
 		return function;
 	}
 	Type *getType() {
-		assert(getCodeKind() == CODE_TYPE);
+		assert(getCodeKind() == Code::TYPE);
 		return type;
 	}
 };
@@ -88,7 +98,7 @@ public:
 // Syntax Tree
 typedef enum {STMTKIND,EXPKIND} NodeKind;
 typedef enum {
-	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND
+	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND, NAMEKIND
 } ExpKind;
 typedef enum {
 	OP_DOT, OP_EQUAL, OP_LP, OP_RP, OP_LB, OP_RB, OP_ASSIGN, OP_GE, OP_GT, OP_LE, OP_LT,

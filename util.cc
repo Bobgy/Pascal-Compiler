@@ -4,29 +4,37 @@
 char buf[MAX_LENGTH*10];
 char path[MAX_LENGTH];
 stack<FuncContext> funcContext;
-int depth = 0;
 int isGlobal = 1;
+
+void FuncContext::dump() {
+	fprintf(stderr, "Dumping symbol table info of %s:\n", funcName.c_str());
+	for (auto x: symbolTable) {
+		fprintf(stderr, "> %s\n",  x.first.c_str());
+	}
+	fflush(stderr);
+}
 
 void FuncContext::insertName(const string &name, Code code) {
 	if(symbolTable.find(name) != symbolTable.end()){
 		yyerror("The name has already been declared");
 	}
+	yyinfo("inserting name: ");
+	yyinfo((char*)name.c_str());
+	yyinfo("\n");
 	symbolTable[name] = code;
 }
 
+// This is a global helper function to get a name in the current context.
+// It includes both current namespace and the global namespace.
 Code getName(const string &name) {
-	auto table = &funcContext.top().symbolTable;
-	auto it = table->find(name);
-	if (it != table->end()) {
-		return it->second;
-	}
+	Code code = funcContext.top().getName(name);
+	if (code.getCodeKind() != Code::Code::UNDEFINED) return code;
 	if (funcContext.size()>1) {
-		table = &globalFuncContext->symbolTable;
-		it = table->find(name);
-		if (it != table->end()) {
-			return it->second;
-		}
+		code = globalFuncContext->getName(name);
+		if (code.getCodeKind() != Code::UNDEFINED) return code;
 	}
+	funcContext.top().dump();
+	if (funcContext.size()>1) globalFuncContext->dump();
 	yyerror("name not found in symbol table");
 	return Code();
 }
@@ -37,17 +45,18 @@ FuncContext *getFuncContext() {
 }
 
 void pushFuncContext(char *func) {
-    yyinfo("Entering path:");
-    yyinfo(path);
+    yyinfo("Entering path: ");
+	yyinfo(func);
 	yyinfo("\n");
 
     //leaving global region
     isGlobal = 0;
 
-	funcContext.push(FuncContext());
+	funcContext.push(FuncContext(func));
 }
 
 void popFuncContext() {
+	yyinfo("Leaving path\n");
 	funcContext.pop();
 }
 
@@ -207,38 +216,6 @@ char *strCatList(int len) {
 		if (s != NULL) strcat(ret, s);
 	}
 	return ret;
-}
-
-//parse tree to assembly type string
-char *asmParseType(TreeNode *p) {
-	switch (p->symbolType) {
-		case TYPE_INTEGER: return "i32";
-		case TYPE_REAL:    return "double";
-		case TYPE_BOOLEAN:
-		case TYPE_CHARACTER:    return "i8";
-		default: yyerror("asmParseType: type not found");
-	}
-	return NULL;
-}
-
-//concatenate path
-void strCatPath(char *path, char *name) {
-	WARN_NULL(path); WARN_NULL(name);
-	strcat(path, name);
-	strcat(path, "$");
-}
-
-//get parent path
-void strParentPath(char *path) {
-	WARN_NULL(path);
-	if (path[0]==0) {
-		yyerror("ERROR: get parent path of root");
-	} else {
-		*strrchr(path, '$') = 0;
-		char *p = strrchr(path, '$');
-		if (p==NULL) *path = 0;
-		else p[1] = 0;
-	}
 }
 
 //allocate space for an empty string

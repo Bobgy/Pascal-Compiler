@@ -3,15 +3,22 @@
 #include "global.h"
 
 class FuncContext {
-public:
-	string mInitList;
-	string funcName;
+private:
 	map<string, Code> symbolTable;
-	int mParamCount;
-	FuncContext(): mParamCount(0) {
-		mInitList = "";
+public:
+	string funcName;
+	FuncContext(const string &name): funcName(name) {
+		// do nothing
 	}
 	void insertName(const string &name, Code code);
+	// get the code corresponding to a name
+	// return Code with codeKind==Code::UNDEFINED when not found
+	Code getName(const string &name) {
+		auto it = symbolTable.find(name);
+		if (it != symbolTable.end()) return it->second;
+		return Code();
+	}
+	void dump();
 };
 
 //function context
@@ -52,15 +59,6 @@ char *strAllocCopy(char *);
 
 //allocate space and concatenate catS and catT
 char *strAllocCat(char *catS, char *catT);
-
-//concatenate path
-void strCatPath(char *path, char *name);
-
-//get parent path
-void strParentPath(char *path);
-
-//parse tree to assembly type string
-char *asmParseType(TreeNode *);
 
 //temporary storage for string pointers
 extern char *strList[MAX_LENGTH];
