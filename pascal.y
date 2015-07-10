@@ -380,11 +380,11 @@ stmt:
     };
 non_label_stmt:
     assign_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | proc_stmt {
         $$ = createTreeNodeStmt(NON_LABEL_STMT);
+        $$->derivation = 2;
         $$->child = {$1};
     }
     | compound_stmt {
@@ -415,19 +415,22 @@ non_label_stmt:
         $$ = createTreeNodeStmt(NON_LABEL_STMT);
         $$->child = {$1};
     };
-assign_stmt: NAME  ASSIGN  expression {
-                $$ = createTreeNodeStmt(ASSIGN_STMT);
-                $$->child = {$3};
-            }
-           | NAME LB expression RB ASSIGN expression {
-                $$ = createTreeNodeStmt(ASSIGN_STMT);
-                $$->child = {$3, $5};
-            }
-           | NAME  DOT  NAME  ASSIGN  expression {
-                   $$ = createTreeNodeStmt(ASSIGN_STMT);
-                $$->child = {$5};
-           }
-;
+assign_stmt:
+    //$$->child = {expression}
+    NAME ASSIGN expression {
+        $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$->derivation = 1;
+        $$->child = {$3};
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
+    }
+    | NAME LB expression RB ASSIGN expression {
+        $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$->child = {$3, $5};
+    }
+    | NAME  DOT  NAME  ASSIGN  expression {
+           $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$->child = {$5};
+    };
 proc_stmt:     NAME {
                 $$ = createTreeNodeStmt(PROC_STMT);
             }
@@ -511,71 +514,79 @@ expression_list: expression_list  COMMA  expression {
                     $$->child = {$1};
                 }
 ;
-expression: expression  GE  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GE
-                $$->child = {$1, $3};
-            }
-            |  expression  GT  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GT
-                $$->child = {$1, $3};
-            }
-            |  expression  LE  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LE
-                $$->child = {$1, $3};
-            }
-            |  expression  LT  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LT
-                $$->child = {$1, $3};
-            }
-            |  expression  EQUAL  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_EQUAL
-                $$->child = {$1, $3};
-            }
-            |  expression  UNEQUAL  expr {
-                $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_UNEQUAL
-                $$->child = {$1, $3};
-            }
-            |  expr {
-                $$ = $1;
-            }
-;
-expr: expr  PLUS  term {
+expression:
+    expression  GE  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GE
+        $$->child = {$1, $3};
+    }
+    |  expression  GT  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GT
+        $$->child = {$1, $3};
+    }
+    |  expression  LE  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LE
+        $$->child = {$1, $3};
+    }
+    |  expression  LT  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LT
+        $$->child = {$1, $3};
+    }
+    |  expression  EQUAL  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_EQUAL
+        $$->child = {$1, $3};
+    }
+    |  expression  UNEQUAL  expr {
+        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_UNEQUAL
+        $$->child = {$1, $3};
+    }
+    |  expr {
+        $$ = $1;
+    };
+expr:
+    expr  PLUS  term {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_PLUS
+        $$->derivation = 1;
         $$->child = {$1, $3};
     }
     |  expr  MINUS  term {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MINUS
+        $$->derivation = 2;
         $$->child = {$1, $3};
     }
     |  expr  OR  term {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_OR
+        $$->derivation = 3;
         $$->child = {$1, $3};
     }
     |  term {
         $$ = $1;
-    }
-;
+    };
 term: term  MUL  factor {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MUL
+        $$->derivation = 1;
         $$->child = {$1, $3};
     }
     |  term  DIV  factor {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DIV
+        $$->derivation = 2;
         $$->child = {$1, $3};
     }
     |  term  MOD  factor {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MOD
+        $$->derivation = 3;
         $$->child = {$1, $3};
     }
     |  term  AND  factor {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_AND
+        $$->derivation = 4;
         $$->child = {$1, $3};
     }
     |  factor {
         $$ = $1;
     }
 ;
-factor: NAME {
+factor:
+    NAME {
         $$ = $1;
     }
     |  NAME  LP  args_list  RP {
@@ -595,6 +606,7 @@ factor: NAME {
     }
     |  const_value {
         $$ = $1;
+        $$->derivation = 5;
     }
     |  LP  expression  RP {
         $$ = $2;

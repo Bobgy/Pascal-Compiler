@@ -127,6 +127,21 @@ Code TreeNode::genCode() {
                     default: yyerror("Not defined type.");
                 }
             }
+
+            case ASSIGN_STMT: {
+                switch (derivation) {
+                    // NAME ASSIGN expression($0)
+                    case 1: {
+                        TreeNode *expression = child[0];
+                        Value *val = expression->genCode().getValue();
+                        Value *var = getFuncContext()->getName(attr.symbolName).getValue();
+                        Builder.CreateStore(val, var);
+                        return Code(val);
+                    }
+                    default: yyerror("ASSIGN_STMT not found!");
+                }
+            }
+
             default: yyerror("Unrecorded statement type");
         }
     } else {
@@ -157,6 +172,11 @@ Code TreeNode::genCode() {
             case NAMEKIND:
                 DEBUG_INFO("generating from NAME");
                 return getName(child[0]->attr.symbolName);
+            case OPKIND:
+                switch (attr.op) {
+                    default: yyerror("OPKIND not implemented!");
+                }
+
             default: yyerror("Unrecorded expression type");
         }
     }
