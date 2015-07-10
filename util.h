@@ -4,31 +4,31 @@
 
 class FuncContext {
 private:
-	map<string, Code> symbolTable;
+    map<string, Code> symbolTable;
 public:
-	string funcName, path;
-	FuncContext(const string &name, const string &path): funcName(name), path(path) {
-		// do nothing
-	}
-	// insert a name into symbolTable with code
-	void insertName(const string &name, Code code);
-	// get the code corresponding to a name
-	// return Code with codeKind==Code::UNDEFINED when not found
-	Code getName(const string &name) {
-		auto it = symbolTable.find(name);
-		if (it != symbolTable.end()) return it->second;
-		return Code();
-	}
-	// show debug info in symbolTable
-	void dump();
-	// return function name together with path
-	string getFullFuncName() const {
-		if (path.empty()) return funcName;
-		else return path.substr(0, path.size()-1);
-	}
-	Function *getCurrentFunction() {
-		return symbolTable[getFullFuncName()].getFunction();
-	}
+    string funcName, path;
+    FuncContext(const string &name, const string &path): funcName(name), path(path) {
+        // do nothing
+    }
+    // insert a name into symbolTable with code
+    void insertName(const string &name, Code code);
+    // get the code corresponding to a name
+    // return Code with codeKind==Code::UNDEFINED when not found
+    Code getName(const string &name) {
+        auto it = symbolTable.find(name);
+        if (it != symbolTable.end()) return it->second;
+        return Code();
+    }
+    // show debug info in symbolTable
+    void dump();
+    // return function name together with path
+    string getFullFuncName() const {
+        if (path.empty()) return funcName;
+        else return path.substr(0, path.size()-1);
+    }
+    Function *getCurrentFunction() {
+        return symbolTable[getFullFuncName()].getFunction();
+    }
 };
 
 //function context
@@ -49,11 +49,11 @@ void yyinfo(char *s);
 TreeNode *createTreeNodeStmt(StmtType);
 TreeNode *createTreeNodeConstant();
 typedef struct expression {
-	ExpKind expKind;
-	char *symbolName;
-	OpType op;
-	SymbolType symbolType;
-	int size;
+    ExpKind expKind;
+    char *symbolName;
+    OpType op;
+    SymbolType symbolType;
+    int size;
 } Expression;
 TreeNode *createTreeNodeExp(Expression);
 int BKDRhash(char *s);

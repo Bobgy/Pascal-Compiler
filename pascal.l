@@ -206,7 +206,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 waitForFuncName = 0;
                 pushFuncContext(yytext);
             }
-			return NAME;
+            return NAME;
         }
     }
     else { //integer real

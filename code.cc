@@ -150,7 +150,7 @@ Code TreeNode::genCode() {
         assert(nodeKind == EXPKIND);
         /*
          *  typedef enum {
-         *  	OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND
+         *      OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND
          *  } ExpKind;
          *
          */

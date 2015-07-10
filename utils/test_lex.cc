@@ -10,20 +10,20 @@ IRBuilder<> Builder(getGlobalContext());
 FunctionPassManager *TheFPM;
 
 int main(){
-	int rt=-1;
-	while((rt=yylex())){
-		printf("%d\n", rt);
-		switch(rt) {
-			case NAME:
-				fprintf(stderr, "NAME: %s\n", yylval->attr.symbolName);
-				break;
-			case REAL:
-				fprintf(stderr, "REAL: %.4lf\n", yylval->attr.value.real);
-				break;
-			case INTEGER:
-				fprintf(stderr, "INTEGER: %d\n", yylval->attr.value.integer);
-				break;
-		}
-	}
-	fprintf(stderr, "======================\n");
+    int rt=-1;
+    while((rt=yylex())){
+        printf("%d\n", rt);
+        switch(rt) {
+            case NAME:
+                fprintf(stderr, "NAME: %s\n", yylval->attr.symbolName);
+                break;
+            case REAL:
+                fprintf(stderr, "REAL: %.4lf\n", yylval->attr.value.real);
+                break;
+            case INTEGER:
+                fprintf(stderr, "INTEGER: %d\n", yylval->attr.value.integer);
+                break;
+        }
+    }
+    fprintf(stderr, "======================\n");
 }
