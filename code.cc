@@ -156,12 +156,12 @@ Code TreeNode::genCode() {
          */
         switch(kind.expKind) {
             case CONSTKIND: {
-                DEBUG_INFO("generating CONSTKIND");
+                DEBUG_INFO("generating CONSTKIND\n");
                 //TYPE_VOID, TYPE_INTEGER, TYPE_BOOLEAN,
                 //TYPE_REAL, TYPE_CHARACTER, TYPE_STRING
                 switch(symbolType) {
                     case TYPE_INTEGER:
-                        DEBUG_INFO("generating INTEGER");
+                        DEBUG_INFO("generating INTEGER\n");
                         return Code(
                             ConstantInt::get(
                                 getGlobalContext(),
@@ -172,7 +172,7 @@ Code TreeNode::genCode() {
                 }
             }
             case NAMEKIND:
-                DEBUG_INFO("generating from NAME");
+                DEBUG_INFO("generating from NAME\n");
                 return getName(child[0]->attr.symbolName);
             case OPKIND:
                 switch (attr.op) {

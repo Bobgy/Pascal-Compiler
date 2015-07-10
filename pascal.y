@@ -388,6 +388,7 @@ stmt:
     }
     |  non_label_stmt {
         $$ = $1;
+        //$$->genCode();
     };
 non_label_stmt:
     assign_stmt {
