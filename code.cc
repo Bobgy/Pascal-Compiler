@@ -4,6 +4,8 @@
 Code TreeNode::genCode() {
     if (nodeKind == STMTKIND) {
         switch(kind.stmtType) {
+            //PROGRAM NAME SEMI
+            case PROGRAM_HEAD:
             //PROCEDURE  NAME  parameters($0)
             case PROCEDURE_HEAD:
             //FUNCTION  NAME  parameters($0)  COLON  simple_type_decl($1)
@@ -35,7 +37,7 @@ Code TreeNode::genCode() {
 
                 FunctionType *FT = FunctionType::get(
                     retType, args,
-                    false //isVarArg, TODO
+                    false //is parameter count variable
                 );
 
                 Function *F = Function::Create(

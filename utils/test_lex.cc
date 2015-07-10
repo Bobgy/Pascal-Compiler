@@ -1,9 +1,14 @@
+#include "../global.h"
 #include "../util.h"
 #include "../y.tab.h"
 #include <stdio.h>
 YYSTYPE yylval;
 FuncContext *globalFuncContext;
 SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
+Module *TheModule;
+IRBuilder<> Builder(getGlobalContext());
+FunctionPassManager *TheFPM;
+
 int main(){
 	int rt=-1;
 	while((rt=yylex())){

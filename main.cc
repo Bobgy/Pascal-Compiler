@@ -10,7 +10,6 @@ FuncContext *globalFuncContext;
 
 Module *TheModule;
 IRBuilder<> Builder(getGlobalContext());
-std::map<std::string, AllocaInst *> NamedValues;
 FunctionPassManager *TheFPM;
 
 void loadConfig() {
@@ -62,7 +61,7 @@ int main()
 	// Set the global so the code gen can use this.
 	TheFPM = &OurFPM;
 
-	pushFuncContext("@global");
+	pushFuncContext("main");
 	globalFuncContext = &funcContext.top();
 
 	yyparse();

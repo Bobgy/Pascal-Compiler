@@ -58,6 +58,11 @@ void pushFuncContext(char *func) {
 void popFuncContext() {
 	yyinfo("Leaving path\n");
 	funcContext.pop();
+    if (!funcContext.empty()) {
+		Builder.SetInsertPoint(
+			&funcContext.top().getCurrentFunction()->getEntryBlock()
+		);
+	}
 }
 
 void yyerror(char *s)

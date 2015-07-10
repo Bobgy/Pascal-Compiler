@@ -28,10 +28,21 @@ program_stmt:
         printf("%s\n", $2->attr.assembly.c_str());
     };
 
-program_head: PROGRAM  NAME  SEMI { // just skipped
-    $$ = createTreeNodeStmt(PROGRAM_HEAD);
-}
-;
+program_head:
+    PROGRAM  NAME  SEMI { // just skipped
+        $$ = createTreeNodeStmt(PROGRAM_HEAD);
+        $$->derivation = 1;
+        $$->attr.symbolName = strAllocCopy("main");
+
+        //create a parameters node with an empty parameter_list
+        TreeNode *parameters = createTreeNodeStmt(PARAMETERS);
+        parameters->derivation = 2;
+
+        $$->child = {parameters};
+
+        //generate code for the main function
+        Code func = $$->genCode();
+    };
 routine: routine_head  routine_body {
     $$ = createTreeNodeStmt(ROUTINE);
     $$->child = {$1, $2};
@@ -371,12 +382,12 @@ stmt_list:
     };
 stmt:
     INTEGER  COLON non_label_stmt {
+        yyerror("Label not implemented");
         $$ = createTreeNodeStmt(STMT);
         $$->child = {$3};
     }
     |  non_label_stmt {
-        $$ = createTreeNodeStmt(STMT);
-        $$->child = {$1};
+        $$ = $1;
     };
 non_label_stmt:
     assign_stmt {
@@ -425,10 +436,12 @@ assign_stmt:
     }
     | NAME LB expression RB ASSIGN expression {
         $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$->derivation = 2;
         $$->child = {$3, $5};
     }
     | NAME  DOT  NAME  ASSIGN  expression {
-           $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$ = createTreeNodeStmt(ASSIGN_STMT);
+        $$->derivation = 3;
         $$->child = {$5};
     };
 proc_stmt:     NAME {

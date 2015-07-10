@@ -47,6 +47,6 @@ clean_not_src: clean_tmp clean_o clean_exe
 
 utils/$(LEX_TARGET).out: $(LEX_TARGET).o utils/test_lex.cc util.o $(COMMON_HEADER)
 	$(CC) $(COP) -c utils/test_lex.cc -o utils/test_lex.o
-	$(CC) $(COP) utils/test_lex.o $(LEX_TARGET).o util.o -o utils/$(LEX_TARGET).out
+	$(CC) -o utils/$(LEX_TARGET).out utils/test_lex.o $(LEX_TARGET).o util.o $(LLVM_LD_OP)
 
 test: utils/$(LEX_TARGET).out
