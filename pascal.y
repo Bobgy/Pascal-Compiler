@@ -227,13 +227,16 @@ name_list:
         $$ = createTreeNodeStmt(NAME_LIST);
         $$->child = {$1};
     };
-var_part: VAR  var_decl_list {
+var_part:
+    //$$->child = {var_decl_list}
+    VAR  var_decl_list {
         $$ = createTreeNodeStmt(VAR_PART);
         $$->child = {$2};
-        $$->attr.assembly = $2->attr.assembly;
+        $$->derivation = 1;
     }
-    | {
+    | { //$$->child = {}
         $$ = createTreeNodeStmt(VAR_PART);
+        $$->derivation = 2;
     }
 ;
 var_decl_list :
@@ -248,14 +251,12 @@ var_decl_list :
         $$->attr.assembly = $1->attr.assembly;
     };
 var_decl:
+    //$$->child = {name_list, type_decl}
     name_list  COLON  type_decl  SEMI {
         $$ = createTreeNodeStmt(VAR_DECL);
         $$->derivation = 1;
         $$->child = {$1, $3};
-        Code type = $3->genCode();
-        for (auto name: $1->child) {
-            getFuncContext()->insertName(name->attr.symbolName, type); //TODO
-        }
+        $$->genCode();
     };
 routine_part:
     routine_part  function_decl {

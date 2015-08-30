@@ -227,3 +227,17 @@ char *strAlloc(int num) {
     p[0] = 0;
     return p;
 }
+
+/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
+/// the function.  This is used for mutable variables etc.
+AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
+                                          const char * VarName, Code Type) {
+    IRBuilder<> TmpB(
+        &TheFunction->getEntryBlock(),
+        TheFunction->getEntryBlock().begin()
+    );
+    return TmpB.CreateAlloca(
+        Type.getType(),
+        0, VarName
+    );
+}

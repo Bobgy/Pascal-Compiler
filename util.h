@@ -74,4 +74,9 @@ extern char *strList[MAX_LENGTH];
 //concatenate strings from global strList
 char *strCatList(int len);
 
+/// CreateEntryBlockAlloca - Create an alloca instruction in the entry block of
+/// the function.  This is used for mutable variables etc.
+AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
+                                          const char * VarName, Code Type);
+
 #endif

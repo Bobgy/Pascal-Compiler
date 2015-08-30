@@ -93,6 +93,22 @@ Code TreeNode::genCode() {
                 return Code(F);
             }
 
+            case VAR_DECL: {
+                //$$->child = {name_list, type_decl}
+                DEBUG_INFO("generating VAR_DECL\n");
+                TreeNode *name_list = child[0],
+                         *type_decl = child[1];
+                Code type = type_decl->genCode();
+                Function *F = Builder.GetInsertBlock()->getParent();
+                for (auto name: name_list->child) {
+                    AllocaInst *alloca = CreateEntryBlockAlloca(
+                        F, name->attr.symbolName, type
+                    );
+                    //getFuncContext()->insertName(name->attr.symbolName, Alloca);
+                }
+                return Code();
+            }
+
             case SIMPLE_TYPE_DECL: {
                 DEBUG_INFO("generating SIMPLE_TYPE_DECL\n");
                 switch(derivation) {
