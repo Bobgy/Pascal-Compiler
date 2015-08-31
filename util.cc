@@ -41,7 +41,7 @@ Code getName(const string &name) {
 }
 
 FuncContext *getFuncContext() {
-    assert(!funcContext.empty());
+    ASSERT(!funcContext.empty());
     return &funcContext.top();
 }
 
@@ -72,6 +72,7 @@ void popFuncContext() {
 void yyerror(const char *s)
 {
     fprintf(stderr, "YYERROR: %s\n", s);
+    TheModule->dump();
     exit(-1);
 }
 
@@ -236,14 +237,15 @@ char *strAlloc(int num) {
 /// the function.  This is used for mutable variables etc.
 AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const char * VarName, Code Type) {
-    IRBuilder<> TmpB(
+    IRBuilder<> Tmp(
         &TheFunction->getEntryBlock(),
         TheFunction->getEntryBlock().begin()
     );
-    AllocaInst *alloca = TmpB.CreateAlloca(
+    AllocaInst *alloca = Tmp.CreateAlloca(
         Type.getType(),
         0, VarName
     );
+    ASSERT(alloca != NULL);
     getFuncContext()->insertName(VarName, alloca);
     return alloca;
 }

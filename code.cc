@@ -48,6 +48,7 @@ Code TreeNode::genCode() {
                     FT, Function::ExternalLinkage,
                     attr.symbolName, TheModule
                 );
+                ASSERT(F);
 
                 // check whether F is conflicting existing functions
                 if (!F->getName().equals(attr.symbolName)) {
@@ -64,6 +65,7 @@ Code TreeNode::genCode() {
                 // Create a new basic block to start insertion into.
                 BasicBlock *BB = BasicBlock::Create(
                     getGlobalContext(), "entry", F);
+                ASSERT(BB);
                 Builder.SetInsertPoint(BB);
 
                 if(isFunction){
@@ -74,7 +76,7 @@ Code TreeNode::genCode() {
                 // Create an alloca for each argument and register the argument
                 // in the symbol table so that references to it will succeed.
                 AI = F->arg_begin();
-                for (unsigned i=0; i < args.size(); ++i, ++AI) {
+                for (unsigned i = 0; i < args.size(); ++i, ++AI) {
                     // Create an alloca for this variable.
                     yyinfo("VAR ");
                     yyinfo(names[i].c_str());
@@ -91,8 +93,10 @@ Code TreeNode::genCode() {
             //program_stmt: program_head  routine  DOT
             case PROGRAM_STMT: SHOW(PROGRAM_STMT);
                 //$$->child = {program_head, routine}
+            case PROCEDURE_DECL: SHOW(PROCEDURE_DECL);
+                //$$->child = {procedure_head, sub_routine}
             case FUNCTION_DECL: {
-                //$$->child = {function_head, sub_routine};
+                //$$->child = {function_head, sub_routine}
                 SHOW(FUNCTION_DECL);
                 TreeNode *function_head = child[0],
                          *sub_routine   = child[1];
@@ -111,8 +115,6 @@ Code TreeNode::genCode() {
 
                 // Optimize the function.
                 // TheFPM->run(*F); TODO
-
-                TheModule->dump();
 
                 popFuncContext();
 

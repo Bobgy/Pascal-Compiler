@@ -297,8 +297,6 @@ procedure_head :
         $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
         // procedure_head saved the name of function
         $$->child = {$3};
-
-        Code func = $$->genCode();
     };
 parameters:
     LP  para_decl_list  RP {
