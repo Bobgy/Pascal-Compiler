@@ -79,4 +79,9 @@ char *strCatList(int len);
 AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const char * VarName, Code Type);
 
+template<class T1, class T2> T1 *get(T2 *t2){
+    T1 *t1 = dynamic_cast<T1*>(t2);
+    if (t1==NULL) yyerror("ERROR: invalid pointer cast");
+    return t1;
+}
 #endif

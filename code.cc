@@ -104,7 +104,7 @@ Code TreeNode::genCode() {
                     AllocaInst *alloca = CreateEntryBlockAlloca(
                         F, name->attr.symbolName, type
                     );
-                    //getFuncContext()->insertName(name->attr.symbolName, Alloca);
+                    getFuncContext()->insertName(name->attr.symbolName, get<Value>(alloca));
                 }
                 return Code();
             }

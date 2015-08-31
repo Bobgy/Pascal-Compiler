@@ -435,6 +435,7 @@ assign_stmt:
         $$->derivation = 1;
         $$->child = {$3};
         $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
+        $$->genCode();
     }
     | NAME LB expression RB ASSIGN expression {
         $$ = createTreeNodeStmt(ASSIGN_STMT);
