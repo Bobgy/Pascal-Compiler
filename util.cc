@@ -54,6 +54,7 @@ void pushFuncContext(const char *func) {
         funcContext.push(FuncContext(func, string(func)+"$"));
         globalFuncContext = &funcContext.top();
     } else {
+        isGlobal = 0;
         string stmp = funcContext.top().path + func;
         funcContext.push(FuncContext(func, stmp+"$"));
     }

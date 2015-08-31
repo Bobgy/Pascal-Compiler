@@ -1,11 +1,11 @@
 #include "global.h"
 #include "util.h"
 
-#define SHOW(x) {if(!showed){showed=1;DEBUG_INFO(#x"\n");}}
+#define SHOW(x) {if(!showed){showed=(x);DEBUG_INFO(#x"\n");}}
 
 Code TreeNode::genCode() {
     if (nodeKind == STMTKIND) {
-        bool showed = 0;
+        unsigned showed = 0;
         switch(kind.stmtType) {
             //PROGRAM NAME SEMI
             case PROGRAM_HEAD: SHOW(PROGRAM_HEAD);
@@ -141,9 +141,14 @@ Code TreeNode::genCode() {
                 Code type = type_decl->genCode();
                 Function *F = Builder.GetInsertBlock()->getParent();
                 for (auto name: name_list->child) {
-                    AllocaInst *alloca = CreateEntryBlockAlloca(
-                        F, name->attr.symbolName, type
-                    );
+                    if (isGlobal) {
+                        Value *val = TheModule->getOrInsertGlobal(
+                            name->attr.symbolName, type.getType());
+                        getFuncContext()->insertName(name->attr.symbolName, val);
+                    } else {
+                        AllocaInst *alloca = CreateEntryBlockAlloca(
+                            F, name->attr.symbolName, type);
+                    }
                 }
                 return Code();
             }
