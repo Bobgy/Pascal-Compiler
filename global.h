@@ -33,6 +33,10 @@ int yyparse();
 extern int yydebug;
 extern int debuginfo;
 #define DEBUG_INFO(x) do { if(debuginfo)yyinfo(x); } while(0)
+#define ASSERT(x) {if(!(x)){yyerror(#x);}}
+
+void yyerror(const char *s);
+void yyinfo(const char *s);
 
 typedef union {
     int integer;
@@ -83,15 +87,15 @@ public:
         codeKind = Code::TYPE;
     }
     Value *getValue() {
-        assert(getCodeKind() == Code::VALUE);
+        ASSERT(getCodeKind() == Code::VALUE);
         return value;
     }
     Function *getFunction() {
-        assert(getCodeKind() == Code::FUNCTION);
+        ASSERT(getCodeKind() == Code::FUNCTION);
         return function;
     }
     Type *getType() {
-        assert(getCodeKind() == Code::TYPE);
+        ASSERT(getCodeKind() == Code::TYPE);
         return type;
     }
     void dump();

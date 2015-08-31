@@ -23,11 +23,12 @@ public:
     void dump();
     // return function name together with path
     string getFullFuncName() const {
+        return funcName; //temporary, TODO
         if (path.empty()) return funcName;
         else return path.substr(0, path.size()-1);
     }
     Function *getCurrentFunction() {
-        return symbolTable[getFullFuncName()].getFunction();
+        return TheModule->getFunction(getFullFuncName());
     }
 };
 
@@ -44,8 +45,6 @@ FuncContext *getFuncContext();
 extern FuncContext *globalFuncContext;
 
 int yylex();
-void yyerror(const char *s);
-void yyinfo(const char *s);
 TreeNode *createTreeNodeStmt(StmtType);
 TreeNode *createTreeNodeConstant();
 typedef struct expression {

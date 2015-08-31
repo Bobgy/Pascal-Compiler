@@ -100,7 +100,10 @@ Code TreeNode::genCode() {
                 pushFuncContext(function_head->attr.symbolName);
                 Function *F = function_head->genCode().getFunction();
                 sub_routine->genCode();
-                Builder.CreateRet(getName(function_head->attr.symbolName).getValue());
+                if (kind.stmtType==FUNCTION_DECL) {
+                    Builder.CreateRet(
+                        getName(function_head->attr.symbolName).getValue());
+                }
 
                 // finish function implementation
                 // Validate the generated code, checking for consistency.

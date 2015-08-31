@@ -35,7 +35,8 @@ Code getName(const string &name) {
     }
     funcContext.top().dump();
     if (funcContext.size()>1) globalFuncContext->dump();
-    yyerror("name not found in symbol table");
+    sprintf(buf, "name %s not found in symbol table\n", name.c_str());
+    yyerror(buf);
     return Code();
 }
 
