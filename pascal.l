@@ -204,7 +204,6 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             yylval->attr.symbolName = strAllocCopy(yytext);
             if (waitForFuncName) {
                 waitForFuncName = 0;
-                pushFuncContext(yytext);
             }
             return NAME;
         }

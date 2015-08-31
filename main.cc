@@ -3,6 +3,7 @@
 #include <fstream>
 
 extern int yydebug;
+int debuginfo;
 
 SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 TreeNode *syntaxTreeRoot;
@@ -16,6 +17,7 @@ void loadConfig() {
     fstream config;
     config.open(".config", ios::in);
     yydebug = 0;
+    debuginfo = 0;
     if (config.is_open()) {
         string a, b, c;
         while (config >> a >> b >> c) {
@@ -23,6 +25,9 @@ void loadConfig() {
             if (a == "YYDEBUG") {
                 yydebug = atoi(c.c_str());
                 cerr << "CONFIG: YYDEBUG = " << yydebug << endl;
+            } else if (a == "DEBUGINFO") {
+                debuginfo = atoi(c.c_str());
+                cerr << "CONFIG: DEBUGINFO = " << debuginfo << endl;
             }
         }
     }
@@ -61,12 +66,7 @@ int main()
     // Set the global so the code gen can use this.
     TheFPM = &OurFPM;
 
-    pushFuncContext("main");
-    globalFuncContext = &funcContext.top();
-
     yyparse();
-
-    popFuncContext();
 
     TheFPM = NULL;
 

@@ -43,16 +43,18 @@ FuncContext *getFuncContext() {
     return &funcContext.top();
 }
 
-void pushFuncContext(char *func) {
+void pushFuncContext(const char *func) {
     yyinfo("Entering path: ");
     yyinfo(func);
     yyinfo("\n");
 
-    //leaving global region
-    isGlobal = 0;
-
-    string basePath = funcContext.empty() ? "" : funcContext.top().path;
-    funcContext.push(FuncContext(func, basePath+func+"$"));
+    if (funcContext.empty()){
+        funcContext.push(FuncContext(func, string(func)+"$"));
+        globalFuncContext = &funcContext.top();
+    } else {
+        string stmp = funcContext.top().path + func;
+        funcContext.push(FuncContext(func, stmp+"$"));
+    }
 }
 
 void popFuncContext() {
@@ -65,13 +67,13 @@ void popFuncContext() {
     }
 }
 
-void yyerror(char *s)
+void yyerror(const char *s)
 {
     fprintf(stderr, "YYERROR: %s\n", s);
     exit(-1);
 }
 
-void yyinfo(char *s)
+void yyinfo(const char *s)
 {
     fprintf(stderr, "%s", s);
     fflush(stderr);
@@ -236,8 +238,10 @@ AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
         &TheFunction->getEntryBlock(),
         TheFunction->getEntryBlock().begin()
     );
-    return TmpB.CreateAlloca(
+    AllocaInst *alloca = TmpB.CreateAlloca(
         Type.getType(),
         0, VarName
     );
+    getFuncContext()->insertName(VarName, alloca);
+    return alloca;
 }

@@ -23,13 +23,15 @@ Expression NULL_EXP;
 program_stmt:
     program_head  routine  DOT {
         $$ = createTreeNodeStmt(PROGRAM_STMT);
+        $$->attr.symbolName = "main";
         syntaxTreeRoot = $$;
         $$->child = {$1, $2};
-        printf("%s\n", $2->attr.assembly.c_str());
+        //generate code for the main function
+        Code func = $$->genCode();
     };
 
 program_head:
-    PROGRAM  NAME  SEMI { // just skipped
+    PROGRAM  NAME  SEMI { //$$->child = {parameters};
         $$ = createTreeNodeStmt(PROGRAM_HEAD);
         $$->derivation = 1;
         $$->attr.symbolName = strAllocCopy("main");
@@ -39,9 +41,6 @@ program_head:
         parameters->derivation = 2;
 
         $$->child = {parameters};
-
-        //generate code for the main function
-        Code func = $$->genCode();
     };
 routine: routine_head  routine_body {
     $$ = createTreeNodeStmt(ROUTINE);
@@ -256,16 +255,16 @@ var_decl:
         $$ = createTreeNodeStmt(VAR_DECL);
         $$->derivation = 1;
         $$->child = {$1, $3};
-        $$->genCode();
+        //$$->genCode();
     };
 routine_part:
     routine_part  function_decl {
-        $$ = $2;
-        $$->child = {$1};
+        $$ = createTreeNodeStmt(ROUTINE_PART);
+        $$->child = {$1, $2};
     }
     |  routine_part  procedure_decl {
-        $$ = $2;
-        $$->child = {$1};
+        $$ = createTreeNodeStmt(ROUTINE_PART);
+        $$->child = {$1, $2};
     }
     |  function_decl {
         $$ = $1;
@@ -280,8 +279,6 @@ function_decl :
     function_head  SEMI  sub_routine  SEMI {
         $$ = createTreeNodeStmt(FUNCTION_DECL);
         $$->child = {$1, $3};
-
-        popFuncContext();
     };
 function_head:
     //$$->child = {parameters, simple_type_decl}
@@ -290,18 +287,11 @@ function_head:
         $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
         // function_head saved the name of function
         $$->child = {$3, $5};
-
-        Code func = $$->genCode();
     };
 procedure_decl :
     procedure_head  SEMI  sub_routine  SEMI {
         $$ = createTreeNodeStmt(PROCEDURE_DECL);
         $$->child = {$1, $3};
-
-        //asm TODO
-        //$$->attr.assembly = $1->attr.assembly + $3->attr.assembly + "}";
-
-        popFuncContext();
     };
 procedure_head :
     //$$->child = {parameters}
@@ -435,7 +425,6 @@ assign_stmt:
         $$->derivation = 1;
         $$->child = {$3};
         $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
-        $$->genCode();
     }
     | NAME LB expression RB ASSIGN expression {
         $$ = createTreeNodeStmt(ASSIGN_STMT);

@@ -31,7 +31,8 @@ using namespace llvm;
 int yylex();
 int yyparse();
 extern int yydebug;
-#define DEBUG_INFO(x) do { if(yydebug)yyinfo(x); } while(0)
+extern int debuginfo;
+#define DEBUG_INFO(x) do { if(debuginfo)yyinfo(x); } while(0)
 
 typedef union {
     int integer;

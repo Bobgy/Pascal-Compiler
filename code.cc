@@ -1,15 +1,19 @@
 #include "global.h"
 #include "util.h"
 
+#define SHOW(x) {if(!showed){showed=1;DEBUG_INFO(#x"\n");}}
+
 Code TreeNode::genCode() {
     if (nodeKind == STMTKIND) {
+        bool showed = 0;
         switch(kind.stmtType) {
             //PROGRAM NAME SEMI
-            case PROGRAM_HEAD:
+            case PROGRAM_HEAD: SHOW(PROGRAM_HEAD);
             //PROCEDURE  NAME  parameters($0)
-            case PROCEDURE_HEAD:
+            case PROCEDURE_HEAD: SHOW(PROCEDURE_HEAD);
             //FUNCTION  NAME  parameters($0)  COLON  simple_type_decl($1)
             case FUNCTION_HEAD: {
+                SHOW(FUNCTION_HEAD);
                 bool isFunction = kind.stmtType == FUNCTION_HEAD;
 
                 // Make the function type
@@ -46,7 +50,7 @@ Code TreeNode::genCode() {
                 );
 
                 // check whether F is conflicting existing functions
-                if (F->getName() != attr.symbolName) {
+                if (!F->getName().equals(attr.symbolName)) {
                     sprintf(buf, "Redeclaration of function \"%s\"\n", attr.symbolName);
                     yyerror(buf);
                 }
@@ -58,44 +62,75 @@ Code TreeNode::genCode() {
                 }
 
                 // Create a new basic block to start insertion into.
-                BasicBlock *BB = BasicBlock::Create(getGlobalContext(), "entry", F);
+                BasicBlock *BB = BasicBlock::Create(
+                    getGlobalContext(), "entry", F);
                 Builder.SetInsertPoint(BB);
+
+                if(isFunction){
+                    Value *retVal = CreateEntryBlockAlloca(
+                        F, attr.symbolName, retType);
+                }
 
                 // Create an alloca for each argument and register the argument
                 // in the symbol table so that references to it will succeed.
                 AI = F->arg_begin();
                 for (unsigned i=0; i < args.size(); ++i, ++AI) {
                     // Create an alloca for this variable.
-                    IRBuilder<> tmp(&F->getEntryBlock(), F->getEntryBlock().begin());
-                    AllocaInst *alloca = tmp.CreateAlloca(args[i], 0, names[i].c_str());
-
-                    // Store the initial value into the alloca.
-                    Builder.CreateStore(AI, alloca);
-
-                    // Add arguments to variable symbol table.
-                    getFuncContext()->insertName(names[i], alloca);
+                    yyinfo("VAR ");
+                    yyinfo(names[i].c_str());
+                    yyinfo("\n");
+                    AllocaInst *alloca = CreateEntryBlockAlloca(
+                        F, names[i].c_str(), args[i]
+                    );
                 }
 
-                /* TODO: finish function implementation
-                if (Value *RetVal = Body->Codegen()) {
-                    // Finish off the function.
-                    Builder.CreateRet(RetVal);
-
-                    // Validate the generated code, checking for consistency.
-                    verifyFunction(*TheFunction);
-
-                    // Optimize the function.
-                    TheFPM->run(*TheFunction);
-
-                    return TheFunction;
-                }
-                */
                 return Code(F);
+            }
+
+
+            //program_stmt: program_head  routine  DOT
+            case PROGRAM_STMT: SHOW(PROGRAM_STMT);
+                //$$->child = {program_head, routine}
+            case FUNCTION_DECL: {
+                //$$->child = {function_head, sub_routine};
+                SHOW(FUNCTION_DECL);
+                TreeNode *function_head = child[0],
+                         *sub_routine   = child[1];
+
+                pushFuncContext(function_head->attr.symbolName);
+                Function *F = function_head->genCode().getFunction();
+                sub_routine->genCode();
+                Builder.CreateRet(getName(function_head->attr.symbolName).getValue());
+
+                // finish function implementation
+                // Validate the generated code, checking for consistency.
+                verifyFunction(*F);
+
+                // Optimize the function.
+                // TheFPM->run(*F); TODO
+
+                TheModule->dump();
+
+                popFuncContext();
+
+                return F;
+            }
+
+            //routine: routine_head routine_body
+            case ROUTINE: SHOW(ROUTINE);
+            //sub_routine: routine_head routine_body
+            case SUB_ROUTINE: {
+                SHOW(SUB_ROUTINE);
+                TreeNode *routine_head = child[0],
+                         *routine_body = child[1];
+                routine_head->genCode();
+                routine_body->genCode();
+                return Code();
             }
 
             case VAR_DECL: {
                 //$$->child = {name_list, type_decl}
-                DEBUG_INFO("generating VAR_DECL\n");
+                SHOW(VAR_DECL);
                 TreeNode *name_list = child[0],
                          *type_decl = child[1];
                 Code type = type_decl->genCode();
@@ -104,13 +139,12 @@ Code TreeNode::genCode() {
                     AllocaInst *alloca = CreateEntryBlockAlloca(
                         F, name->attr.symbolName, type
                     );
-                    getFuncContext()->insertName(name->attr.symbolName, get<Value>(alloca));
                 }
                 return Code();
             }
 
             case SIMPLE_TYPE_DECL: {
-                DEBUG_INFO("generating SIMPLE_TYPE_DECL\n");
+                SHOW(SIMPLE_TYPE_DECL);
                 switch(derivation) {
                     case 1: { //SYS_TYPE
                         DEBUG_INFO("generating SYS_TYPE\n");
@@ -147,6 +181,7 @@ Code TreeNode::genCode() {
             }
 
             case ASSIGN_STMT: {
+                SHOW(ASSIGN_STMT);
                 switch (derivation) {
                     // NAME ASSIGN expression($0)
                     case 1: {
@@ -160,7 +195,18 @@ Code TreeNode::genCode() {
                 }
             }
 
-            default: yyerror("Unrecorded statement type");
+            case ROUTINE_HEAD: SHOW(ROUTINE_HEAD);
+            case VAR_PART: SHOW(VAR_PART);
+            case ROUTINE_PART: SHOW(ROUTINE_PART);
+            case VAR_DECL_LIST: SHOW(VAR_DECL_LIST);
+                for(auto ch: child)
+                    ch->genCode();
+                return Code();
+
+            default: {
+                DEBUG_INFO("Ignore unrecorded statement type\n");
+                return Code();
+            }
         }
     } else {
         assert(nodeKind == EXPKIND);

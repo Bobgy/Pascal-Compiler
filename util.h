@@ -37,15 +37,15 @@ extern stack<FuncContext> funcContext;
 extern char buf[MAX_LENGTH*10];
 extern int isGlobal;
 
-void pushFuncContext(char *s);
+void pushFuncContext(const char *s);
 void popFuncContext();
 Code getName(const string &name);
 FuncContext *getFuncContext();
 extern FuncContext *globalFuncContext;
 
 int yylex();
-void yyerror(char *s);
-void yyinfo(char *s);
+void yyerror(const char *s);
+void yyinfo(const char *s);
 TreeNode *createTreeNodeStmt(StmtType);
 TreeNode *createTreeNodeConstant();
 typedef struct expression {

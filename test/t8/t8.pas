@@ -3,10 +3,14 @@ var
 	i : integer;
 	j : integer;
 	k : integer;
-//function gao(x: integer): integer;
-//begin
-//	gao := 5;
-//end;
+function test(x: integer): integer;
+begin
+	test := 6;
+end;
+function gao(x: integer): integer;
+begin
+	gao := 5;
+end;
 begin
 	i := 3;
 	j := 5;
