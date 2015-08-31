@@ -202,6 +202,7 @@ Code TreeNode::genCode() {
             case VAR_PART: SHOW(VAR_PART);
             case ROUTINE_PART: SHOW(ROUTINE_PART);
             case VAR_DECL_LIST: SHOW(VAR_DECL_LIST);
+            case STMT_LIST: SHOW(STMT_LIST);
                 for(auto ch: child)
                     ch->genCode();
                 return Code();

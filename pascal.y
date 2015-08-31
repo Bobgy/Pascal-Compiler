@@ -45,20 +45,17 @@ program_head:
 routine: routine_head  routine_body {
     $$ = createTreeNodeStmt(ROUTINE);
     $$->child = {$1, $2};
-    $$->attr.assembly = $1->attr.assembly; // TODO: add routine_body
 }
 ;
 sub_routine: routine_head  routine_body {
     $$ = createTreeNodeStmt(SUB_ROUTINE);
     $$->child = {$1, $2};
-    $$->attr.assembly = $1->attr.assembly; // TODO: add routine_body
 }
 ;
 
 routine_head: label_part  const_part  type_part  var_part  routine_part {
     $$ = createTreeNodeStmt(ROUTINE_HEAD);
     $$->child = {$1, $2, $3, $4, $5};
-    //$$->attr.assembly = asmCatSiblin($1);
 }
 ;
 label_part: { // just skipped
@@ -344,15 +341,15 @@ var_para_list:
         $$->setStmtType(VAR_PARA_LIST);
         $$->derivation = 2;
     };
-routine_body: compound_stmt {
-                $$ = createTreeNodeStmt(ROUTINE_BODY);
-                $$->child = {$1};
-            }
+routine_body:
+    compound_stmt {
+        $$ = $1;
+    }
 ;
-compound_stmt: BEGIN_TOKEN  stmt_list  END {
-                    $$ = createTreeNodeStmt(COMPOUND_STMT);
-                    $$->child = {$2};
-                }
+compound_stmt:
+    BEGIN_TOKEN  stmt_list  END {
+        $$ = $2;
+    }
 ;
 stmt_list:
     stmt_list  stmt  SEMI {
