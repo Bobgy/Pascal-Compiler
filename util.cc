@@ -9,6 +9,7 @@ void FuncContext::dump() {
     fprintf(stderr, "Dumping symbol table info of %s:\n", funcName.c_str());
     for (auto x: symbolTable) {
         fprintf(stderr, "> %s\n",  x.first.c_str());
+        x.second.dump();
     }
     fflush(stderr);
 }
@@ -244,4 +245,25 @@ AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
     );
     getFuncContext()->insertName(VarName, alloca);
     return alloca;
+}
+
+void Code::dump(){
+   switch(getCodeKind()){
+       case VALUE:
+           DEBUG_INFO("Value:\n");
+           getValue()->dump();
+           break;
+       case FUNCTION:
+           DEBUG_INFO("Function:\n");
+           getFunction()->dump();
+           break;
+       case TYPE:
+           DEBUG_INFO("Type\n");
+           break;
+       case UNDEFINED:
+           DEBUG_INFO("Undefined\n");
+           break;
+       default:
+           DEBUG_INFO("Error: not found\n");
+   }
 }

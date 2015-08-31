@@ -94,6 +94,7 @@ public:
         assert(getCodeKind() == Code::TYPE);
         return type;
     }
+    void dump();
 };
 
 // Syntax Tree

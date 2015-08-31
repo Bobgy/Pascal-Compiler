@@ -8,6 +8,7 @@ SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 Module *TheModule;
 IRBuilder<> Builder(getGlobalContext());
 FunctionPassManager *TheFPM;
+int debuginfo;
 
 int main(){
     int rt=-1;

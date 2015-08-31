@@ -330,15 +330,6 @@ para_type_list:
         $$ = createTreeNodeStmt(PARA_TYPE_LIST);
         $$->derivation = $1->derivation;
         $$->child = {$1, $3};
-        //Code type = $3->genCode();
-
-        //$1->child[0] is name_list
-        //name_list->child is the names
-        /* TODO add to code.cc/genCode/FUNCTION_DECL
-        for (auto name: $1->child[0]->child) {
-            getFuncContext()->insertName(name->attr.symbolName, type);
-        }
-        */
     };
 var_para_list:
     //$$->child = {name0, name1, ...}
