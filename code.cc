@@ -205,6 +205,49 @@ Code TreeNode::genCode() {
                 }
             }
 
+            //if_stmt: IF  expression  THEN  stmt  else_clause
+            case IF_STMT: {
+                //$$->child = {expression, stmt, else_clause}
+                TreeNode *expression  = child[0],
+                         *stmt        = child[1],
+                         *else_clause = child[2];
+                Code exp = expression->genCode();
+                Value *CondV = Builder.CreateICmpNE(
+                    exp.getValue(),
+                    ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0)
+                );
+                Function *TheFunction = Builder.GetInsertBlock()->getParent();
+
+                // Create blocks for the then and else cases.  Insert the 'then' block at the
+                // end of the function.
+                BasicBlock *ThenBB = BasicBlock::Create(getGlobalContext(), "then", TheFunction);
+                BasicBlock *ElseBB = BasicBlock::Create(getGlobalContext(), "else");
+                BasicBlock *MergeBB = BasicBlock::Create(getGlobalContext(), "ifcont");
+
+                Builder.CreateCondBr(CondV, ThenBB, ElseBB);
+
+                // Emit then value.
+                Builder.SetInsertPoint(ThenBB);
+                stmt->genCode();
+                Builder.CreateBr(MergeBB);
+                ThenBB = Builder.GetInsertBlock();
+
+                // Emit else block.
+                TheFunction->getBasicBlockList().push_back(ElseBB);
+                Builder.SetInsertPoint(ElseBB);
+
+                else_clause->genCode();
+
+                Builder.CreateBr(MergeBB);
+                ElseBB = Builder.GetInsertBlock();
+
+                // Emit merge block.
+                TheFunction->getBasicBlockList().push_back(MergeBB);
+                Builder.SetInsertPoint(MergeBB);
+                return Code();
+            }
+
+
             case ROUTINE_HEAD: SHOW(ROUTINE_HEAD);
             case VAR_PART: SHOW(VAR_PART);
             case ROUTINE_PART: SHOW(ROUTINE_PART);

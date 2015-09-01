@@ -440,10 +440,11 @@ proc_stmt:     NAME {
                 $$->child = {$3};
             }
 ;
-if_stmt: IF  expression  THEN  stmt  else_clause {
-            $$ = createTreeNodeStmt(IF_STMT);
-            $$->child = {$2, $4, $5};
-        };
+if_stmt:
+    IF  expression  THEN  stmt  else_clause {
+        $$ = createTreeNodeStmt(IF_STMT);
+        $$->child = {$2, $4, $5};
+    };
 else_clause: ELSE stmt {
                 $$ = createTreeNodeStmt(ELSE_CALUSE);
                 $$->child = {$2};
