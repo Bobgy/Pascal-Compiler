@@ -166,26 +166,29 @@ TreeNode *createTreeNodeExp(Expression T)
     p->nodeKind = EXPKIND;
     p->kind.expKind = T.expKind;
     switch (T.expKind) { //OPKIND, IDKIND, FUNCKIND, ARRAYKIND
-        OPKIND:
+        case OPKIND:
             p->attr.op = T.op;
             break;
-        IDKIND:
+        case NAMEKIND:
+            p->attr.symbolName = strAllocCopy(T.symbolName);
+            break;
+        case IDKIND:
             p->attr.symbolName = strAllocCopy(T.symbolName);
             p->symbolType = T.symbolType;
             break;
-        FUNCKIND:
+        case FUNCKIND:
             p->attr.symbolName = strAllocCopy(T.symbolName);
             p->symbolType = T.symbolType;
             break;
-        ARRAYKIND:
+        case ARRAYKIND:
             p->attr.symbolName = strAllocCopy(T.symbolName);
             p->symbolType = T.symbolType;
             p->attr.size = T.size;
             break;
-        RECORDKIND:
+        case RECORDKIND:
             break;
         default:
-            break;
+            yyerror("T.expKind not found.");
     }
     return p;
 }

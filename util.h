@@ -47,13 +47,16 @@ extern FuncContext *globalFuncContext;
 int yylex();
 TreeNode *createTreeNodeStmt(StmtType);
 TreeNode *createTreeNodeConstant();
-typedef struct expression {
+struct Expression {
     ExpKind expKind;
     char *symbolName;
     OpType op;
     SymbolType symbolType;
     int size;
-} Expression;
+    Expression(){
+        op = OP_NOT;
+    }
+};
 TreeNode *createTreeNodeExp(Expression);
 int BKDRhash(char *s);
 void insert(char*, size_t, TreeNode*);

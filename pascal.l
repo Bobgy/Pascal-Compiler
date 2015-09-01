@@ -103,7 +103,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
         if (c=='\'') break;
         ++cnt;
     }
-    if (cnt>1) return STRING;
+    if (cnt>1) return STRING; //TODO
     else return CHAR;
 }
 
@@ -238,7 +238,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             }
         }
     }
-    assert(0 && "LEX: no type found!");
+    ASSERT(0 && "LEX: no type found!");
 }
 .|\n {
     //Other

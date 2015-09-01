@@ -12,6 +12,7 @@ FuncContext *globalFuncContext;
 Module *TheModule;
 IRBuilder<> Builder(getGlobalContext());
 FunctionPassManager *TheFPM;
+void init_template_expr();
 
 void loadConfig() {
     fstream config;
@@ -36,6 +37,7 @@ void loadConfig() {
 int main()
 {
     loadConfig();
+    init_template_expr();
 
     LLVMContext &Context = getGlobalContext();
 

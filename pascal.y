@@ -1,7 +1,10 @@
 %{
 #include "global.h"
 #include "util.h"
-Expression NULL_EXP;
+Expression NULL_EXP, opExpr;
+void init_template_expr(){
+    opExpr.expKind = OPKIND;
+}
 %}
 
 %token NAME
@@ -360,12 +363,10 @@ stmt_list:
 stmt:
     INTEGER  COLON non_label_stmt {
         yyerror("Label not implemented");
-        $$ = createTreeNodeStmt(STMT);
-        $$->child = {$3};
+        $$ = $3;
     }
     |  non_label_stmt {
         $$ = $1;
-        //$$->genCode();
     };
 non_label_stmt:
     assign_stmt {
@@ -381,8 +382,7 @@ non_label_stmt:
         $$->child = {$1};
     }
     | if_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | repeat_stmt {
         $$ = createTreeNodeStmt(NON_LABEL_STMT);
@@ -443,13 +443,17 @@ proc_stmt:     NAME {
 if_stmt:
     IF  expression  THEN  stmt  else_clause {
         $$ = createTreeNodeStmt(IF_STMT);
-        $$->child = {$2, $4, $5};
+        $$->child = {$2, $4};
+        if ($5) $$->child.push_back($5);
     };
-else_clause: ELSE stmt {
-                $$ = createTreeNodeStmt(ELSE_CALUSE);
-                $$->child = {$2};
-            }
-|;
+else_clause:
+    ELSE stmt {
+        $$ = $2;
+    }
+    | {
+        $$ = NULL;
+    }
+;
 repeat_stmt: REPEAT  stmt_list  UNTIL  expression {
                 $$ = createTreeNodeStmt(REPEAT_STMT);
                 $$->child = {$2, $4};
@@ -497,14 +501,14 @@ goto_stmt: GOTO  INTEGER // just skipped
   /////////////////////////////////////
  ////      expression part        ////
 /////////////////////////////////////
-expression_list: expression_list  COMMA  expression {
-                    $$ = createTreeNodeStmt(EXPRESSION_LIST);
-                    $$->child = {$1, $3};
-                }
-                | expression {
-                    $$ = createTreeNodeStmt(EXPRESSION_LIST);
-                    $$->child = {$1};
-                }
+expression_list:
+    expression_list  COMMA  expression {
+        $$ = createTreeNodeStmt(EXPRESSION_LIST);
+        $$->child = {$1, $3};
+    }
+    | expression {
+        $$ = $1;
+    }
 ;
 expression:
     expression  GE  expr {
@@ -524,11 +528,13 @@ expression:
         $$->child = {$1, $3};
     }
     |  expression  EQUAL  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_EQUAL
+        opExpr.op = OP_EQUAL;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expression  UNEQUAL  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_UNEQUAL
+        opExpr.op = OP_UNEQUAL;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expr {
@@ -579,7 +585,11 @@ term: term  MUL  factor {
 ;
 factor:
     NAME {
-        $$ = $1;
+        Expression expArgs;
+        expArgs.expKind = NAMEKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->derivation = 1;
     }
     |  NAME  LP  args_list  RP {
         Expression expArgs;

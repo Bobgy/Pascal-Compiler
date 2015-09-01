@@ -4,8 +4,8 @@
 #define SHOW(x) {if(!showed){showed=(x);DEBUG_INFO(#x"\n");}}
 
 Code TreeNode::genCode() {
+    unsigned showed = 0;
     if (nodeKind == STMTKIND) {
-        unsigned showed = 0;
         switch(kind.stmtType) {
             //PROGRAM NAME SEMI
             case PROGRAM_HEAD: SHOW(PROGRAM_HEAD);
@@ -208,6 +208,7 @@ Code TreeNode::genCode() {
             //if_stmt: IF  expression  THEN  stmt  else_clause
             case IF_STMT: {
                 //$$->child = {expression, stmt, else_clause}
+                SHOW(IF_STMT);
                 TreeNode *expression  = child[0],
                          *stmt        = child[1],
                          *else_clause = child[2];
@@ -272,12 +273,11 @@ Code TreeNode::genCode() {
          */
         switch(kind.expKind) {
             case CONSTKIND: {
-                DEBUG_INFO("generating CONSTKIND\n");
                 //TYPE_VOID, TYPE_INTEGER, TYPE_BOOLEAN,
                 //TYPE_REAL, TYPE_CHARACTER, TYPE_STRING
                 switch(symbolType) {
                     case TYPE_INTEGER:
-                        DEBUG_INFO("generating INTEGER\n");
+                        SHOW(TYPE_INTEGER);
                         return Code(
                             ConstantInt::get(
                                 getGlobalContext(),
@@ -287,11 +287,20 @@ Code TreeNode::genCode() {
                     default: yyerror("Unrecorded symbol type");
                 }
             }
-            case NAMEKIND:
-                DEBUG_INFO("generating from NAME\n");
-                return getName(child[0]->attr.symbolName);
+            case NAMEKIND: SHOW(NAMEKIND);
+                return Builder.CreateLoad(
+                    getName(attr.symbolName).getValue(),
+                    attr.symbolName
+                );
             case OPKIND:
+                Value *lval, *rval;
+                ASSERT(lval = child[0]->genCode().getValue());
+                ASSERT(rval = child[1]->genCode().getValue());
                 switch (attr.op) {
+                    case OP_EQUAL: {
+                        SHOW(OP_EQUAL);
+                        return Code(Builder.CreateICmpEQ(lval, rval));
+                    }
                     default: yyerror("OPKIND not implemented!");
                 }
 
