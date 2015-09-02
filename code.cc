@@ -20,6 +20,7 @@ Code TreeNode::genCode() {
                 // Make the function type
                 vector<Type *> args;
                 vector<string> names;
+                vector<bool>   isVar;
 
                 TreeNode *parameters       = child[0],
                          *simple_type_decl = isFunction ? child[1] : NULL;
@@ -31,7 +32,8 @@ Code TreeNode::genCode() {
 
                     Type *type = simple_type_decl->genCode().getType();
                     for (auto &name: var_para_list->child) {
-                        args.push_back(type);
+                        isVar.push_back(var_para_list->derivation==1); //VAR
+                        args.push_back(isVar.back() ? type->getPointerTo() : type);
                         names.push_back(name->attr.symbolName);
                     }
                 }
@@ -64,9 +66,8 @@ Code TreeNode::genCode() {
                 }
 
                 // Create a new basic block to start insertion into.
-                BasicBlock *BB = BasicBlock::Create(
-                    getGlobalContext(), "entry", F);
-                ASSERT(BB);
+                BasicBlock *BB;
+                ASSERT(BB = BasicBlock::Create(getGlobalContext(), "entry", F));
                 Builder.SetInsertPoint(BB);
 
                 if(isFunction){
@@ -82,10 +83,15 @@ Code TreeNode::genCode() {
                     yyinfo("VAR ");
                     yyinfo(names[i].c_str());
                     yyinfo("\n");
-                    AllocaInst *alloca = CreateEntryBlockAlloca(
-                        F, names[i].c_str(), args[i]
-                    );
-                    Builder.CreateStore(AI, alloca);
+                    if(isVar[i]){
+                        Value *var = AI;
+                        getFuncContext()->insertName(names[i].c_str(), var);
+                    } else {
+                        AllocaInst *alloca = CreateEntryBlockAlloca(
+                            F, names[i].c_str(), args[i]
+                        );
+                        Builder.CreateStore(AI, alloca);
+                    }
                 }
 
                 return Code(F);
@@ -345,6 +351,10 @@ Code TreeNode::genCode() {
                         return Builder.CreateAdd(lval, rval);
                     case OP_MINUS: SHOW(OP_MINUS);
                         return Builder.CreateSub(lval, rval);
+                    case OP_MUL: SHOW(OP_MUL);
+                        return Builder.CreateMul(lval, rval);
+                    case OP_GT: SHOW(OP_GT);
+                        return Builder.CreateICmpSGT(lval, rval);
                     default:
                         sprintf(buf, "OPKIND %d not implemented!", attr.op);
                         yyerror(buf);
@@ -362,7 +372,16 @@ Code TreeNode::genCode() {
                     yyerror("Incorrect # arguments passed");
                 }
 
-                vector<Value *> args = genArgsList(args_list);
+                vector<Value *> args = genArgsList(args_list, true);
+                ASSERT(args.size() == CalleeF->arg_size());
+                auto AI = CalleeF->arg_begin();
+                for (int i = 0; i < args.size(); ++i, ++AI) {
+                    if (!AI->getType()->isPointerTy()
+                            && args[i]->getType()->isPointerTy()) {
+                        args[i] = Builder.CreateLoad(args[i]);
+                    }
+                    ASSERT(args[i]->getType() == AI->getType());
+                }
 
                 return Builder.CreateCall(CalleeF, args);
             }
@@ -375,10 +394,16 @@ Code TreeNode::genCode() {
     return Code();
 }
 
-vector<Value *> genArgsList(TreeNode *argsList){
+Value *genArg(TreeNode *arg, bool enableVar=0){
+    if (enableVar && arg->nodeKind == EXPKIND && arg->kind.expKind == NAMEKIND) {
+        return getName(arg->attr.symbolName).getValue();
+    } else return arg->genCode().getValue();
+}
+
+vector<Value *> genArgsList(TreeNode *argsList, bool enableVar){
     vector<Value *> args;
     for(auto ch: argsList->child){
-        args.push_back(ch->genCode().getValue());
+        args.push_back(genArg(ch, enableVar));
     }
     return args;
 }

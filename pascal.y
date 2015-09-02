@@ -556,24 +556,28 @@ expr:
         $$ = $1;
     };
 term: term  MUL  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MUL
-        $$->derivation = 1;
+        opExpr.op = OP_MUL;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
+        $$->derivation = 1;
     }
     |  term  DIV  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DIV
-        $$->derivation = 2;
+        opExpr.op = OP_DIV;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
+        $$->derivation = 2;
     }
     |  term  MOD  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MOD
-        $$->derivation = 3;
+        opExpr.op = OP_MOD;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
+        $$->derivation = 3;
     }
     |  term  AND  factor {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_AND
-        $$->derivation = 4;
+        opExpr.op = OP_AND;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
+        $$->derivation = 4;
     }
     |  factor {
         $$ = $1;

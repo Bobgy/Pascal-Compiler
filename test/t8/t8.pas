@@ -15,7 +15,7 @@ begin
 	i := 3;
 	j := 5;
 	k := 8;
-	//j := gao(i);
-	//writeln(j);
+	j := gao(i);
+	writeln(j);
 end
 .

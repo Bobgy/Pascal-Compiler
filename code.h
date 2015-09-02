@@ -1,5 +1,5 @@
 #include "util.h"
-vector<Value *> genArgsList(TreeNode *argsList);
+vector<Value *> genArgsList(TreeNode *argsList, bool enableVar=0);
 void init_sys_func();
 class Printf{
 private:
