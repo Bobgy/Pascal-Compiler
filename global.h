@@ -15,6 +15,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/raw_ostream.h"
 
 // stl headers
 #include <cctype>

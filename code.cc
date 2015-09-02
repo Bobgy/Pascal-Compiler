@@ -111,7 +111,7 @@ Code TreeNode::genCode() {
                         function_head->attr.symbolName
                     );
                     Builder.CreateRet(val);
-                }
+                } else Builder.CreateRetVoid();
 
                 // finish function implementation
                 // Validate the generated code, checking for consistency.
@@ -146,9 +146,19 @@ Code TreeNode::genCode() {
                 Function *F = Builder.GetInsertBlock()->getParent();
                 for (auto name: name_list->child) {
                     if (isGlobal) {
-                        Value *val = TheModule->getOrInsertGlobal(
-                            name->attr.symbolName, type.getType());
-                        getFuncContext()->insertName(name->attr.symbolName, val);
+                        GlobalVariable* gvar = new GlobalVariable(
+                            *TheModule,
+                            type.getType(),
+                            false, // is constant
+                            GlobalValue::CommonLinkage,
+                            ConstantInt::get( // initializer
+                                TheModule->getContext(),
+                                APInt(32, StringRef("0"), 10)
+                            ),
+                            name->attr.symbolName
+                        );
+                        gvar->setAlignment(4);
+                        getFuncContext()->insertName(name->attr.symbolName, gvar);
                     } else {
                         AllocaInst *alloca = CreateEntryBlockAlloca(
                             F, name->attr.symbolName, type);
@@ -217,10 +227,13 @@ Code TreeNode::genCode() {
                          *stmt        = child[1],
                          *else_clause = child[2];
                 Code exp = expression->genCode();
+                Value *CondV = exp.getValue();
+                /*
                 Value *CondV = Builder.CreateICmpNE(
                     exp.getValue(),
                     ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0)
                 );
+                */
                 Function *TheFunction = Builder.GetInsertBlock()->getParent();
 
                 // Create blocks for the then and else cases.  Insert the 'then' block at the
@@ -252,6 +265,27 @@ Code TreeNode::genCode() {
                 return Code();
             }
 
+            case PROC_STMT: {
+                //SYS_PROC(child[0])  LP  args_list(child[1])  RP
+                SHOW(PROC_STMT);
+                TreeNode *sys_proc  = child[0],
+                         *args_list = child[1];
+
+                if(strcmp(sys_proc->attr.symbolName, "writeln")==0){
+                    Function *CalleeF;
+                    ASSERT(CalleeF  = TheModule->getFunction("printf"));
+
+                    // If argument mismatch error.
+
+                    vector<Value *> args = genArgsList(args_list);
+                    args.insert(args.begin(), genPrintf.const_ptr);
+
+                    return Builder.CreateCall(CalleeF, args);
+                } else { //if(strcmp(sys_proc->attr.symbolName, "write")==0){
+                    sprintf(buf, "Not implemented %s!", sys_proc->attr.symbolName);
+                    yyerror(buf);
+                }
+            }
 
             case ROUTINE_HEAD: SHOW(ROUTINE_HEAD);
             case VAR_PART: SHOW(VAR_PART);
@@ -346,4 +380,75 @@ vector<Value *> genArgsList(TreeNode *argsList){
         args.push_back(ch->genCode().getValue());
     }
     return args;
+}
+
+void Printf::init(){
+    const_array = ConstantDataArray::getString(TheModule->getContext(), "%d\x0A", true);
+    ArrayType* ArrayTy = ArrayType::get(IntegerType::get(TheModule->getContext(), 8), 4);
+    gvar_array__str = new GlobalVariable(
+        /*Module=*/*TheModule,
+        /*Type=*/ArrayTy,
+        /*isConstant=*/true,
+        /*Linkage=*/GlobalValue::PrivateLinkage,
+        /*Initializer=*/const_array,
+        /*Name=*/".str"
+    );
+    gvar_array__str->setAlignment(1);
+    PointerType* PointerTy =
+        PointerType::get(IntegerType::get(TheModule->getContext(), 8), 0);
+
+    vector<Type*> FuncTy_args;
+    FuncTy_args.push_back(PointerTy);
+    FunctionType* FuncTy = FunctionType::get(
+        /*Result=*/IntegerType::get(TheModule->getContext(), 32),
+        /*Params=*/FuncTy_args,
+        /*isVarArg=*/true
+    );
+    Function* func_printf = TheModule->getFunction("printf");
+    if (!func_printf) {
+        func_printf = Function::Create(
+            /*Type=*/FuncTy,
+            /*Linkage=*/GlobalValue::ExternalLinkage,
+            /*Name=*/"printf",
+            TheModule
+        ); // (external, no body)
+        func_printf->setCallingConv(CallingConv::C);
+    }
+    AttributeSet func_printf_PAL;
+    {
+        SmallVector<AttributeSet, 4> Attrs;
+        AttributeSet PAS;
+        {
+             AttrBuilder B;
+             B.addAttribute(Attribute::ReadOnly);
+             B.addAttribute(Attribute::NoCapture);
+             PAS = AttributeSet::get(TheModule->getContext(), 1U, B);
+        }
+
+        Attrs.push_back(PAS);
+        {
+             AttrBuilder B;
+             B.addAttribute(Attribute::NoUnwind);
+             PAS = AttributeSet::get(TheModule->getContext(), ~0U, B);
+        }
+
+        Attrs.push_back(PAS);
+        func_printf_PAL = AttributeSet::get(TheModule->getContext(), Attrs);
+
+    }
+    func_printf->setAttributes(func_printf_PAL);
+
+    std::vector<Constant*> const_ptr_indices;
+    const_int32_0 = ConstantInt::get(TheModule->getContext(), APInt(32, StringRef("0"), 10));
+    const_ptr_indices.push_back(const_int32_0);
+    const_ptr_indices.push_back(const_int32_0);
+    const_ptr = ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
+    const_ptr_to_str =
+        ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
+}
+
+Printf genPrintf;
+
+void init_sys_func(){
+    genPrintf.init();
 }

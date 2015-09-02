@@ -147,7 +147,12 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {colon}       {return COLON;}
 {assign}      {return ASSIGN;}
 {begin}       {return BEGIN_TOKEN;}
-{sys_proc}    {return SYS_PROC;}
+{sys_proc}    {
+    yylval = createTreeNodeConstant();
+    yylval->symbolType = TYPE_STRING;
+    yylval->attr.symbolName = strAllocCopy(yytext);
+    return SYS_PROC;
+}
 {read}        {return READ;}
 {if}          {return IF;}
 {then}        {return THEN;}

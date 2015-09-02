@@ -432,9 +432,10 @@ proc_stmt:
     }
     |  SYS_PROC { // just skipped
     }
-    |  SYS_PROC  LP  expression_list  RP { // only need to consider writeln()
+    |  SYS_PROC  LP  args_list  RP { // only need to consider writeln()
         $$ = createTreeNodeStmt(PROC_STMT);
-        $$->child = {$3};
+        $$->child = {$1, $3};
+        $$->derivation = 4;
     }
     |  READ  LP  factor  RP {
         $$ = createTreeNodeStmt(PROC_STMT);
@@ -501,15 +502,6 @@ goto_stmt: GOTO  INTEGER // just skipped
   /////////////////////////////////////
  ////      expression part        ////
 /////////////////////////////////////
-expression_list:
-    expression_list  COMMA  expression {
-        $$ = createTreeNodeStmt(EXPRESSION_LIST);
-        $$->child = {$1, $3};
-    }
-    | expression {
-        $$ = $1;
-    }
-;
 expression:
     expression  GE  expr {
         opExpr.op = OP_GE;

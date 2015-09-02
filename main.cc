@@ -1,5 +1,6 @@
 #include "global.h"
 #include "util.h"
+#include "code.h"
 #include <fstream>
 
 extern int yydebug;
@@ -68,12 +69,19 @@ int main()
     // Set the global so the code gen can use this.
     TheFPM = &OurFPM;
 
+    init_sys_func();
+
     yyparse();
 
     TheFPM = NULL;
 
     // dump generated assembly code
     TheModule->dump();
+
+    error_code EC;
+    raw_fd_ostream std_output("-", EC, sys::fs::F_None);
+
+    TheModule->print(std_output, NULL);
 
     return 0;
 }
