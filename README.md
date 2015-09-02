@@ -5,6 +5,11 @@
 - 朱稼乐 3120000346
 - 龚源   3120000381
 
+## Current status
+- test2 passed
+- test4 passed
+- test8 passed
+
 ## How to compile
 You need to compile this project in Linux. The following instructions are for Ubuntu.
 
