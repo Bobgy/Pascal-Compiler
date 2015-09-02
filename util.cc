@@ -28,7 +28,7 @@ void FuncContext::insertName(const string &name, Code code) {
 // It includes both current namespace and the global namespace.
 Code getName(const string &name) {
     Code code = funcContext.top().getName(name);
-    if (code.getCodeKind() != Code::Code::UNDEFINED) return code;
+    if (code.getCodeKind() != Code::UNDEFINED) return code;
     if (funcContext.size()>1) {
         code = globalFuncContext->getName(name);
         if (code.getCodeKind() != Code::UNDEFINED) return code;

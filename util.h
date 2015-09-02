@@ -53,9 +53,6 @@ struct Expression {
     OpType op;
     SymbolType symbolType;
     int size;
-    Expression(){
-        op = OP_NOT;
-    }
 };
 TreeNode *createTreeNodeExp(Expression);
 int BKDRhash(char *s);

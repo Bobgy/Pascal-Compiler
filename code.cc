@@ -1,5 +1,6 @@
 #include "global.h"
 #include "util.h"
+#include "code.h"
 
 #define SHOW(x) {if(!showed){showed=(x);DEBUG_INFO(#x"\n");}}
 
@@ -105,8 +106,11 @@ Code TreeNode::genCode() {
                 Function *F = function_head->genCode().getFunction();
                 sub_routine->genCode();
                 if (kind.stmtType==FUNCTION_DECL) {
-                    Builder.CreateRet(
-                        getName(function_head->attr.symbolName).getValue());
+                    Value *val = Builder.CreateLoad(
+                        getName(function_head->attr.symbolName).getValue(),
+                        function_head->attr.symbolName
+                    );
+                    Builder.CreateRet(val);
                 }
 
                 // finish function implementation
@@ -197,7 +201,7 @@ Code TreeNode::genCode() {
                     case 1: {
                         TreeNode *expression = child[0];
                         Value *val = expression->genCode().getValue();
-                        Value *var = getFuncContext()->getName(attr.symbolName).getValue();
+                        Value *var = getName(attr.symbolName).getValue();
                         Builder.CreateStore(val, var);
                         return Code(val);
                     }
@@ -259,12 +263,13 @@ Code TreeNode::genCode() {
                 return Code();
 
             default: {
-                DEBUG_INFO("Ignore unrecorded statement type\n");
+                sprintf(buf, "Ignore unimplemented Statement Type %d\n", kind.stmtType);
+                DEBUG_INFO(buf);
                 return Code();
             }
         }
     } else {
-        assert(nodeKind == EXPKIND);
+        ASSERT(nodeKind == EXPKIND);
         /*
          *  typedef enum {
          *      OPKIND, CONSTKIND, IDKIND, FUNCKIND, ARRAYKIND, RECORDKIND
@@ -284,7 +289,9 @@ Code TreeNode::genCode() {
                                 APInt(32, attr.value.integer, true)
                             )
                         );
-                    default: yyerror("Unrecorded symbol type");
+                    default:
+                        sprintf(buf, "Not implemented Symbol Type %d\n", symbolType);
+                        yyerror(buf);
                 }
             }
             case NAMEKIND: SHOW(NAMEKIND);
@@ -297,16 +304,46 @@ Code TreeNode::genCode() {
                 ASSERT(lval = child[0]->genCode().getValue());
                 ASSERT(rval = child[1]->genCode().getValue());
                 switch (attr.op) {
-                    case OP_EQUAL: {
-                        SHOW(OP_EQUAL);
-                        return Code(Builder.CreateICmpEQ(lval, rval));
-                    }
-                    default: yyerror("OPKIND not implemented!");
+                    case OP_EQUAL: SHOW(OP_EQUAL);
+                        return Builder.CreateICmpEQ(lval, rval);
+                    case OP_PLUS: SHOW(OP_PLUS);
+                        return Builder.CreateAdd(lval, rval);
+                    case OP_MINUS: SHOW(OP_MINUS);
+                        return Builder.CreateSub(lval, rval);
+                    default:
+                        sprintf(buf, "OPKIND %d not implemented!", attr.op);
+                        yyerror(buf);
+                }
+            case FUNCKIND: {
+                //NAME  LP  args_list(child[0])  RP
+                SHOW(FUNCKIND);
+                TreeNode *args_list = child[0];
+
+                Function *CalleeF;
+                ASSERT(CalleeF  = TheModule->getFunction(attr.symbolName));
+
+                // If argument mismatch error.
+                if (CalleeF->arg_size() != args_list->child.size()) {
+                    yyerror("Incorrect # arguments passed");
                 }
 
-            default: yyerror("Unrecorded expression type");
+                vector<Value *> args = genArgsList(args_list);
+
+                return Builder.CreateCall(CalleeF, args);
+            }
+            default:
+                sprintf(buf, "Not implemented Expression Type %d\n", kind.expKind);
+                yyerror(buf);
         }
     }
     yyerror("No code generated");
     return Code();
+}
+
+vector<Value *> genArgsList(TreeNode *argsList){
+    vector<Value *> args;
+    for(auto ch: argsList->child){
+        args.push_back(ch->genCode().getValue());
+    }
+    return args;
 }

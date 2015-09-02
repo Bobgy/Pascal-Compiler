@@ -373,36 +373,28 @@ non_label_stmt:
         $$ = $1;
     }
     | proc_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->derivation = 2;
-        $$->child = {$1};
+        $$ = $1;
     }
     | compound_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | if_stmt {
         $$ = $1;
     }
     | repeat_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | while_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | for_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | case_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     }
     | goto_stmt {
-        $$ = createTreeNodeStmt(NON_LABEL_STMT);
-        $$->child = {$1};
+        $$ = $1;
     };
 assign_stmt:
     //$$->child = {expression}
@@ -422,36 +414,44 @@ assign_stmt:
         $$->derivation = 3;
         $$->child = {$5};
     };
-proc_stmt:     NAME {
-                $$ = createTreeNodeStmt(PROC_STMT);
-            }
-              |  NAME  LP  args_list  RP {
-                $$ = createTreeNodeStmt(PROC_STMT);
-                $$->child = {$3};
-            }
-             |  SYS_PROC { // just skipped
-            }
-              |  SYS_PROC  LP  expression_list  RP { // only need to consider writeln()
-                $$ = createTreeNodeStmt(PROC_STMT);
-                $$->child = {$3};
-            }
-              |  READ  LP  factor  RP {
-                $$ = createTreeNodeStmt(PROC_STMT);
-                $$->child = {$3};
-            }
+proc_stmt:
+    NAME {
+        Expression expArgs;
+        expArgs.expKind = NAMEKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->derivation = 1;
+    }
+    |  NAME  LP  args_list  RP {
+        Expression expArgs;
+        expArgs.expKind = FUNCKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->derivation = 2;
+        $$->child = {$3};
+    }
+    |  SYS_PROC { // just skipped
+    }
+    |  SYS_PROC  LP  expression_list  RP { // only need to consider writeln()
+        $$ = createTreeNodeStmt(PROC_STMT);
+        $$->child = {$3};
+    }
+    |  READ  LP  factor  RP {
+        $$ = createTreeNodeStmt(PROC_STMT);
+        $$->child = {$3};
+    }
 ;
 if_stmt:
     IF  expression  THEN  stmt  else_clause {
         $$ = createTreeNodeStmt(IF_STMT);
-        $$->child = {$2, $4};
-        if ($5) $$->child.push_back($5);
+        $$->child = {$2, $4, $5};
     };
 else_clause:
     ELSE stmt {
         $$ = $2;
     }
     | {
-        $$ = NULL;
+        $$ = createTreeNodeStmt(ELSE_CLAUSE);
     }
 ;
 repeat_stmt: REPEAT  stmt_list  UNTIL  expression {
@@ -512,19 +512,23 @@ expression_list:
 ;
 expression:
     expression  GE  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GE
+        opExpr.op = OP_GE;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expression  GT  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_GT
+        opExpr.op = OP_GT;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expression  LE  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LE
+        opExpr.op = OP_LE;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expression  LT  expr {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_LT
+        opExpr.op = OP_LT;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expression  EQUAL  expr {
@@ -542,18 +546,18 @@ expression:
     };
 expr:
     expr  PLUS  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_PLUS
-        $$->derivation = 1;
+        opExpr.op = OP_PLUS;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expr  MINUS  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_MINUS
-        $$->derivation = 2;
+        opExpr.op = OP_MINUS;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  expr  OR  term {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_OR
-        $$->derivation = 3;
+        opExpr.op = OP_OR;
+        $$ = createTreeNodeExp(opExpr);
         $$->child = {$1, $3};
     }
     |  term {
@@ -597,7 +601,7 @@ factor:
         expArgs.symbolName = $1->attr.symbolName;
         $$ = createTreeNodeExp(expArgs);
         $$->derivation = 2;
-        $$->child.push_back($3);
+        $$->child = {$3};
     }
     |  SYS_FUNCT { //"abs", "chr", "odd", "ord", "pred", "sqr", "sqrt", "succ"
         $$ = createTreeNodeExp(NULL_EXP); //FUNCKIND,$1,0,TYPE_INTEGER
@@ -628,14 +632,15 @@ factor:
         //memcpy($$->child,lookup($1->attr.symbolName),sizeof(TreeNode));
     }
 ;
-args_list:     args_list  COMMA  expression {
-                $$ = createTreeNodeStmt(ARGS_LIST);
-                $$->child = {$1, $3};
-            }
-            |  expression {
-                $$ = createTreeNodeStmt(ARGS_LIST);
-                $$->child = {$1};
-            }
+args_list: //$$->child = {exp, exp, exp, ...}
+    args_list  COMMA  expression {
+        $$ = $1;
+        $$->child.push_back($3);
+    }
+    |  expression {
+        $$ = createTreeNodeStmt(ARGS_LIST);
+        $$->child = {$1};
+    }
 ;
 
 %%
