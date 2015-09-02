@@ -85,6 +85,7 @@ Code TreeNode::genCode() {
                     AllocaInst *alloca = CreateEntryBlockAlloca(
                         F, names[i].c_str(), args[i]
                     );
+                    Builder.CreateStore(AI, alloca);
                 }
 
                 return Code(F);
