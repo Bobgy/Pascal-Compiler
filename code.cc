@@ -355,6 +355,8 @@ Code TreeNode::genCode() {
                         return Builder.CreateMul(lval, rval);
                     case OP_GT: SHOW(OP_GT);
                         return Builder.CreateICmpSGT(lval, rval);
+                    case OP_MOD: SHOW(OP_MOD);
+                        return Builder.CreateSRem(lval, rval);
                     default:
                         sprintf(buf, "OPKIND %d not implemented!", attr.op);
                         yyerror(buf);
