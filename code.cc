@@ -149,21 +149,33 @@ Code TreeNode::genCode() {
                 SHOW(VAR_DECL);
                 TreeNode *name_list = child[0],
                          *type_decl = child[1];
-                Code type = type_decl->genCode();
+                Type *type = type_decl->genCode().getType();
                 Function *F = Builder.GetInsertBlock()->getParent();
                 for (auto name: name_list->child) {
                     if (isGlobal) {
                         GlobalVariable* gvar = new GlobalVariable(
                             *TheModule,
-                            type.getType(),
+                            type,
                             false, // is constant
                             GlobalValue::CommonLinkage,
-                            ConstantInt::get( // initializer
+                            NULL, // initializer set later
+                            name->attr.symbolName
+                        );
+                        if(type->isArrayTy()){
+                            ConstantAggregateZero* const_array;
+                            const_array = ConstantAggregateZero::get(type);
+                            gvar->setInitializer(const_array);
+                        } else if(type->isIntegerTy()){
+                            Constant* const_val;
+                            const_val = ConstantInt::get( // initializer
                                 TheModule->getContext(),
                                 APInt(32, StringRef("0"), 10)
                             ),
-                            name->attr.symbolName
-                        );
+                            gvar->setInitializer(const_val);
+                        } else {
+                            type->dump();
+                            yyerror("Unsupported type initialization");
+                        }
                         gvar->setAlignment(4);
                         getFuncContext()->insertName(name->attr.symbolName, gvar);
                     } else {
@@ -211,16 +223,36 @@ Code TreeNode::genCode() {
                 }
             }
 
+            case ARRAY_TYPE_DECL: {
+                //ARRAY  LB  simple_type_decl(child[0])  RB  OF  type_decl(child[1])
+                SHOW(ARRAY_TYPE_DECL);
+                TreeNode *range    = child[0],
+                         *elemType = child[1];
+                unsigned sz = range->attr.value.integer;
+                Type *elemTy = elemType->genCode().getType();
+                ArrayType* ArrayTy;
+                ASSERT(ArrayTy = ArrayType::get(elemTy, sz));
+                return ArrayTy;
+            }
+
             case ASSIGN_STMT: {
                 SHOW(ASSIGN_STMT);
+                TreeNode *exprVal = child[0];
+                Value *var = getName(attr.symbolName).getValue();
+                Value *val = exprVal->genCode().getValue();
                 switch (derivation) {
-                    // NAME ASSIGN expression($0)
                     case 1: {
-                        TreeNode *expression = child[0];
-                        Value *val = expression->genCode().getValue();
-                        Value *var = getName(attr.symbolName).getValue();
+                        // NAME ASSIGN expression($0)
                         Builder.CreateStore(val, var);
-                        return Code(val);
+                        return var;
+                    }
+                    case 2: {
+                        // NAME LB expression RB ASSIGN expression($0)
+                        TreeNode *exprIdx = child[1];
+                        ASSERT(var->getType()->isPointerTy());
+                        Value *ptr = genElemPointer(var, exprIdx->genCode().getValue());
+                        Builder.CreateStore(val, ptr);
+                        return ptr;
                     }
                     default: yyerror("ASSIGN_STMT not found!");
                 }
@@ -324,22 +356,31 @@ Code TreeNode::genCode() {
                 switch(symbolType) {
                     case TYPE_INTEGER:
                         SHOW(TYPE_INTEGER);
-                        return Code(
-                            ConstantInt::get(
+                        return ConstantInt::get(
                                 getGlobalContext(),
                                 APInt(32, attr.value.integer, true)
-                            )
                         );
                     default:
                         sprintf(buf, "Not implemented Symbol Type %d\n", symbolType);
                         yyerror(buf);
                 }
             }
-            case NAMEKIND: SHOW(NAMEKIND);
-                return Builder.CreateLoad(
-                    getName(attr.symbolName).getValue(),
-                    attr.symbolName
-                );
+            case NAMEKIND: {
+                SHOW(NAMEKIND);
+                Value *name = getName(attr.symbolName).getValue();
+                switch(derivation){
+                    case 1: //NAME
+                        return Builder.CreateLoad(name, attr.symbolName);
+                    case 9: //NAME LB expression($0) RB
+                        return Builder.CreateLoad(
+                            genElemPointer(name, child[0]->genCode().getValue()),
+                            attr.symbolName
+                        );
+                    default:
+                        sprintf(buf, "Not implemented derivation %d for NAMEKIND", derivation);
+                        yyerror(buf);
+                }
+            }
             case OPKIND:
                 Value *lval, *rval;
                 ASSERT(lval = child[0]->genCode().getValue());
@@ -473,6 +514,19 @@ void Printf::init(){
     const_ptr = ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
     const_ptr_to_str =
         ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
+}
+
+Value *genElemPointer(Value *name, Value *offset){
+    ConstantInt* const_int32_0 = ConstantInt::get(
+        TheModule->getContext(), APInt(32, StringRef("0"), 10));
+    //CastInst* int64_17 = new SExtInst(int32_16, IntegerType::get(mod->getContext(), 64), "", label_13);
+    std::vector<Value*> ptr_indices;
+    ptr_indices.push_back(const_int32_0);
+    if (offset->getType()->isPointerTy()) offset = Builder.CreateLoad(offset);
+    ptr_indices.push_back(offset);
+    Value* ptr;
+    ASSERT(ptr = Builder.CreateGEP(name, ptr_indices));
+    return ptr;
 }
 
 Printf genPrintf;

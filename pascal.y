@@ -156,15 +156,11 @@ type_decl:
     simple_type_decl {
         $$ = $1;
     }
-    |  array_type_decl {  // TODO-Bobgy
-        $$ = createTreeNodeStmt(TYPE_DECL);
-        $$->derivation = 2;
-        $$->child = {$1};
+    |  array_type_decl {
+        $$ = $1;
     }
-    |  record_type_decl { // TODO-Bobgy
-        $$ = createTreeNodeStmt(TYPE_DECL);
-        $$->derivation = 3;
-        $$->child = {$1};
+    |  record_type_decl {
+        $$ = $1;
     };
 simple_type_decl: //TODO cannot determine which type
     SYS_TYPE { // "boolean", "char", "integer", "real"
@@ -183,7 +179,7 @@ simple_type_decl: //TODO cannot determine which type
     }
     |  const_value  DOTDOT  const_value {  // just need this to pass test
         $$ = createTreeNodeStmt(SIMPLE_TYPE_DECL);
-        $$->attr.value.integer = $3->attr.value.integer;
+        $$->attr.value.integer = $3->attr.value.integer - $1->attr.value.integer + 1;
         $$->derivation = 4;
     }
     |  MINUS  const_value  DOTDOT  const_value
@@ -193,8 +189,8 @@ simple_type_decl: //TODO cannot determine which type
 array_type_decl:
     ARRAY  LB  simple_type_decl  RB  OF  type_decl {
         $$ = createTreeNodeStmt(ARRAY_TYPE_DECL);
-        $$->symbolType = $6->symbolType;
         $$->attr.size = $3->attr.value.integer;
+        $$->child = {$3, $6};
     }
 ;
 record_type_decl:
@@ -407,12 +403,14 @@ assign_stmt:
     | NAME LB expression RB ASSIGN expression {
         $$ = createTreeNodeStmt(ASSIGN_STMT);
         $$->derivation = 2;
-        $$->child = {$3, $5};
+        $$->child = {$6, $3};
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
     }
     | NAME  DOT  NAME  ASSIGN  expression {
         $$ = createTreeNodeStmt(ASSIGN_STMT);
         $$->derivation = 3;
-        $$->child = {$5};
+        $$->child = {$5, $3};
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
     };
 proc_stmt:
     NAME {
@@ -622,6 +620,12 @@ factor:
         $$->child = {$2};
     }
     |  NAME  LB  expression  RB {
+        Expression expArgs;
+        expArgs.expKind = NAMEKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->child = {$3};
+        $$->derivation = 9;
     }
     |  NAME  DOT  NAME {
         $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DOT

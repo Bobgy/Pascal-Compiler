@@ -1,6 +1,6 @@
 LEX_TARGET := lex.yy
 YACC_TARGET := y.tab
-COMMON_HEADER := global.h util.h
+COMMON_HEADER := global.h util.h code.h
 CC := clang++
 LLVM_C_OP := `llvm-config --cxxflags`
 LLVM_LD_OP := `llvm-config --ldflags --system-libs --libs core mcjit native`

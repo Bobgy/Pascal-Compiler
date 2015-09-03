@@ -218,6 +218,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
             int x;
             sscanf(yytext, "%d", &x);
             yylval = createTreeNodeConstant();
+            yylval->symbolType = TYPE_INTEGER;
             yylval->attr.value.integer = x;
             return INTEGER;
         }
@@ -238,6 +239,7 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
                 double x;
                 sscanf(yytext, "%lf", &x);
                 yylval = createTreeNodeConstant();
+                yylval->symbolType = TYPE_REAL;
                 yylval->attr.value.real = x;
                 return REAL;
             }

@@ -22,6 +22,7 @@ void FuncContext::insertName(const string &name, Code code) {
     yyinfo((char*)name.c_str());
     yyinfo("\n");
     symbolTable[name] = code;
+    code.dump();
 }
 
 // This is a global helper function to get a name in the current context.
