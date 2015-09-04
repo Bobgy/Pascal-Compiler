@@ -3,7 +3,11 @@ TARGET := test2.ll test4.ll test5.ll test6.ll test7.ll test8.ll test1.ll
 all: $(TARGET)
 
 %.ll: %.pas ../y.tab.out Makefile
-	../y.tab.out < $< > $@
+	@echo -n "Testing $@ -- "
+	@../y.tab.out < $< > $@
+	@lli $@ > tmp || diff tmp $@.ans
+	@rm tmp
+	@echo "Passed"
 
 clean:
 	rm -f *.ll
