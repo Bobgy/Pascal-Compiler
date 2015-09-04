@@ -9,6 +9,7 @@
 - test2 passed
 - test4 passed
 - test6 passed
+- test7 passed
 - test8 passed
 
 ## How to compile
