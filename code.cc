@@ -8,6 +8,14 @@ Code TreeNode::genCode() {
     unsigned showed = 0;
     if (nodeKind == STMTKIND) {
         switch(kind.stmtType) {
+            //NAME  EQUAL  const_value($0)  SEMI
+            case CONST_EXPR: {
+                SHOW(CONST_EXPR);
+                TreeNode *const_value = child[0];
+                Value *val = const_value->genCode().getValue();
+                getFuncContext()->insertName(attr.symbolName, val);
+                return val;
+            }
             //NAME  EQUAL  type_decl($0)  SEMI
             case TYPE_DEFINITION: {
                 SHOW(TYPE_DEFINITION);
@@ -504,6 +512,7 @@ Code TreeNode::genCode() {
             case VAR_DECL_LIST: SHOW(VAR_DECL_LIST);
             case STMT_LIST: SHOW(STMT_LIST);
             case TYPE_DECL_LIST: SHOW(TYPE_DECL_LIST);
+            case CONST_EXPR_LIST: SHOW(CONST_EXPR_LIST);
                 for(auto ch: child)
                     ch->genCode();
                 return Code();
@@ -549,7 +558,10 @@ Code TreeNode::genCode() {
                 Value *name = getName(attr.symbolName).getValue();
                 switch(derivation){
                     case 1: //NAME
-                        return Builder.CreateLoad(name, attr.symbolName);
+                        if (name->getType()->isPointerTy()) {
+                            name = Builder.CreateLoad(name, attr.symbolName);
+                        }
+                        return name; 
                     case 9: //NAME LB expression($0) RB
                         return Builder.CreateLoad(
                             genElemPointer(name, child[0]->genCode().getValue()),

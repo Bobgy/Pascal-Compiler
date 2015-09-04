@@ -38,6 +38,7 @@ begin
 	until j.a < 100
 	;
 	writeln(j.a);
+	writeln(cn);
 {
 	case j.a % 4 of
 		0: str := 'A1';

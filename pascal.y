@@ -66,31 +66,28 @@ label_part: { // just skipped
 }
 ;
 const_part: CONST const_expr_list {
-        $$ = createTreeNodeStmt(CONST_PART);
-        $$->child = {$2};
+        $$ = $2;
     }
     | {
-        $$ = createTreeNodeStmt(CONST_PART);
+        $$ = createTreeNodeStmt(CONST_EXPR_LIST);
     }
 ;
-const_expr_list: const_expr_list  NAME  EQUAL  const_value  SEMI {
-            $4->attr.symbolName = strAllocCopy($2->attr.symbolName);
-            strcpy($4->attr.symbolName, $2->attr.symbolName);
-            $$ = createTreeNodeStmt(CONST_EXPR_LIST);
-            $$->child = {$1, $4};
-            // add to symbol table
-            char *idName = $2->attr.symbolName;
-            //insert(strAllocCat(path,idName),0,$4);
-        }
-        |  NAME  EQUAL  const_value  SEMI {
-            $3->attr.symbolName = strAllocCopy($1->attr.symbolName);
-            strcpy($3->attr.symbolName, $1->attr.symbolName);
-            $$ = createTreeNodeStmt(CONST_EXPR_LIST);
-            $$->child = {$3};
-            // add to symbol table
-            char *idName = $1->attr.symbolName;
-            //insert(strAllocCat(path,idName),0,$3);
-        }
+const_expr_list:
+    const_expr_list  const_expr {
+        $$ = $1;
+        $$->child.push_back($2);
+    }
+    | const_expr {
+        $$ = createTreeNodeStmt(CONST_EXPR_LIST);
+        $$->child = {$1};
+    }
+;
+const_expr:
+    NAME  EQUAL  const_value  SEMI {
+        $$ = createTreeNodeStmt(CONST_EXPR);
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
+        $$->child = {$3};
+    }
 ;
 const_value:
     INTEGER {

@@ -15,8 +15,11 @@ void FuncContext::dump() {
 }
 
 void FuncContext::insertName(const string &name, Code code) {
-    if(symbolTable.find(name) != symbolTable.end()){
-        yyerror("The name has already been declared");
+    map<string, Code>::iterator it;
+    if((it=symbolTable.find(name)) != symbolTable.end()){
+        it->second.dump();
+        sprintf(buf, "The name \"%s\" has already been declared", name.c_str());
+        yyerror(buf);
     }
     DEBUG_INFO("inserting name: ");
     DEBUG_INFO((char*)name.c_str());
