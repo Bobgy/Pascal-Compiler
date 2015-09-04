@@ -15,8 +15,8 @@ begin
 	;
 	for i := 0 to 10 do begin
 		writeln(c[i]);
-		if c[i] = 2 then begin
-			c[i] := 1;
+		if c[i] = 25 then begin
+			c[i] := 1000;
 		end
 		;
 	end

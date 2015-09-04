@@ -258,6 +258,64 @@ Code TreeNode::genCode() {
                 }
             }
 
+            case FOR_STMT: {
+                //FOR  NAME  ASSIGN  expression($0)  direction($1)  expression($2)  DO stmt($3)
+                TreeNode *initVal   = child[0],
+                         *direction = child[1],
+                         *stopVal   = child[2],
+                         *stmt      = child[3];
+                Value *var = getName(attr.symbolName).getValue();
+                Builder.CreateStore(initVal->genCode().getValue(), var);
+                Value *stop = stopVal->genCode().getValue();
+
+                Function *F = Builder.GetInsertBlock()->getParent();
+                BasicBlock *ForCondBB = BasicBlock::Create(getGlobalContext(), "for_cond", F);
+                BasicBlock *ForBodyBB = BasicBlock::Create(getGlobalContext(), "for_body");
+                BasicBlock *ForContBB = BasicBlock::Create(getGlobalContext(), "for_cont");
+
+                Builder.CreateBr(ForCondBB);
+                Builder.SetInsertPoint(ForCondBB);
+                Value *CondV, *varVal = Builder.CreateLoad(var);
+                bool up;
+                switch(direction->derivation) {
+                    case 1: //TO
+                        CondV = Builder.CreateICmpSLE(varVal, stop);
+                        up = 1;
+                        break;
+                    case 2: //DOWNTO
+                        CondV = Builder.CreateICmpSGE(varVal, stop);
+                        up = 0;
+                        break;
+                    default:
+                        sprintf(buf, "Invalid direction->derivation: %d\n", direction->derivation);
+                        yyerror(buf);
+                }
+                Builder.CreateCondBr(CondV, ForBodyBB, ForContBB);
+
+                F->getBasicBlockList().push_back(ForBodyBB);
+                Builder.SetInsertPoint(ForBodyBB);
+                stmt->genCode();
+                Value *const_1 = ConstantInt::get(
+                        getGlobalContext(),
+                        APInt(32, 1, true)
+                );
+                varVal = Builder.CreateLoad(var);
+                if (up) {
+                    Value *nextVal = Builder.CreateAdd(varVal, const_1);
+                    Builder.CreateStore(nextVal, var);
+                } else {
+                    Value *nextVal = Builder.CreateSub(varVal, const_1);
+                    Builder.CreateStore(nextVal, var);
+                }
+                Builder.CreateBr(ForCondBB);
+                ForBodyBB = Builder.GetInsertBlock();
+
+                F->getBasicBlockList().push_back(ForContBB);
+                Builder.SetInsertPoint(ForContBB);
+
+                return Code();
+            }
+
             //if_stmt: IF  expression  THEN  stmt  else_clause
             case IF_STMT: {
                 //$$->child = {expression, stmt, else_clause}

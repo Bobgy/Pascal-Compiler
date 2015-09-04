@@ -461,16 +461,21 @@ while_stmt: WHILE  expression  DO stmt {
                 $$ = createTreeNodeStmt(WHILE_STMT);
                 $$->child = {$2};
             };
-for_stmt:     FOR  NAME  ASSIGN  expression  direction  expression  DO stmt {
-                $$ = createTreeNodeStmt(FOR_STMT);
-                $$->child = {$4, $5, $6, $8};
-            };
-direction:     TO {
-                $$ = createTreeNodeStmt(DIRECTION);
-            }
-              | DOWNTO {
-                  $$ = createTreeNodeStmt(DIRECTION);
-              }
+for_stmt:
+    FOR  NAME  ASSIGN  expression  direction  expression  DO stmt {
+        $$ = createTreeNodeStmt(FOR_STMT);
+        $$->child = {$4, $5, $6, $8};
+        $$->attr.symbolName = strAllocCopy($2->attr.symbolName);
+    };
+direction:
+    TO {
+        $$ = createTreeNodeStmt(DIRECTION);
+        $$->derivation = 1;
+    }
+    | DOWNTO {
+        $$ = createTreeNodeStmt(DIRECTION);
+        $$->derivation = 2;
+    }
 ;
 case_stmt:     CASE expression OF case_expr_list  END {
                 $$ = createTreeNodeStmt(CASE_STMT);
