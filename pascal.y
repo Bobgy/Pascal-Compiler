@@ -127,30 +127,33 @@ const_value:
             $$->symbolType = TYPE_INTEGER;
             $$->attr.value.integer = 0;
         }
-    };
-
-type_part: TYPE type_decl_list {
-                $$ = createTreeNodeStmt(TYPE_PART);
-                $$->child = {$2};
-            }
-            | {
-                $$ = createTreeNodeStmt(TYPE_PART);
-            };
-type_decl_list: type_decl_list  type_definition {
-                    $$ = createTreeNodeStmt(TYPE_DECL_LIST);
-                    $$->child = {$1, $2};
-                }
-                | type_definition {
-                    $$ = createTreeNodeStmt(TYPE_DECL_LIST);
-                    $$->child = {$1};
-                }
+    }
 ;
-type_definition: NAME  EQUAL  type_decl  SEMI {
-                    $$ = createTreeNodeStmt(TYPE_DEFINITION);
-                    $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
-                    strcpy($$->attr.symbolName, $1->attr.symbolName);
-                    // store typename in type_definition node
-                }
+type_part:
+    TYPE type_decl_list {
+        $$ = $2;
+    }
+    | {
+        $$ = createTreeNodeStmt(TYPE_DECL_LIST);
+    }
+;
+type_decl_list:
+    //child = {type_definition1, type_definition2, ...};
+    type_decl_list  type_definition {
+        $$ = $1;
+        $1->child.push_back($2);
+    }
+    | type_definition {
+        $$ = createTreeNodeStmt(TYPE_DECL_LIST);
+        $$->child = {$1};
+    }
+;
+type_definition:
+    NAME  EQUAL  type_decl  SEMI {
+        $$ = createTreeNodeStmt(TYPE_DEFINITION);
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
+        $$->child = {$3};
+    }
 ;
 type_decl:
     simple_type_decl {
@@ -236,14 +239,12 @@ var_part:
 ;
 var_decl_list :
     var_decl_list  var_decl {
-        $$ = createTreeNodeStmt(VAR_DECL_LIST);
-        $$->child = {$1, $2};
-        $$->attr.assembly = $1->attr.assembly + $2->attr.assembly;
+        $$ = $1;
+        $$->child.push_back($2);
     }
     | var_decl {
         $$ = createTreeNodeStmt(VAR_DECL_LIST);
         $$->child = {$1};
-        $$->attr.assembly = $1->attr.assembly;
     };
 var_decl:
     //$$->child = {name_list, type_decl}
@@ -350,8 +351,8 @@ compound_stmt:
 ;
 stmt_list:
     stmt_list  stmt  SEMI {
-        $$ = createTreeNodeStmt(STMT_LIST);
-        $$->child = {$1, $2};
+        $$ = $1;
+        $$->child.push_back($2);
     }
     | {
         $$ = createTreeNodeStmt(STMT_LIST);

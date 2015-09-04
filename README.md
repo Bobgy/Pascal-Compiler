@@ -8,6 +8,7 @@
 ## Current status
 - test2 passed
 - test4 passed
+- test5 passed
 - test6 passed
 - test7 passed
 - test8 passed

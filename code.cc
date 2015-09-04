@@ -8,6 +8,15 @@ Code TreeNode::genCode() {
     unsigned showed = 0;
     if (nodeKind == STMTKIND) {
         switch(kind.stmtType) {
+            //NAME  EQUAL  type_decl($0)  SEMI
+            case TYPE_DEFINITION: {
+                SHOW(TYPE_DEFINITION);
+                TreeNode *type_decl = child[0];
+                Type *ty = type_decl->genCode().getType();
+                ty->dump();
+                getFuncContext()->insertName(attr.symbolName, ty);
+                return ty;
+            }
             //PROGRAM NAME SEMI
             case PROGRAM_HEAD: SHOW(PROGRAM_HEAD);
             //PROCEDURE  NAME  parameters($0)
@@ -211,7 +220,7 @@ Code TreeNode::genCode() {
                     }
                     case 2: // NAME
                         DEBUG_INFO("generating NAME\n");
-                        return getName(child[0]->attr.symbolName);
+                        return getName(attr.symbolName);
                     /*
                     case 3: LP name_list RP
                     case 4: const_value DOTDOT const_value
@@ -375,7 +384,16 @@ Code TreeNode::genCode() {
                     // If argument mismatch error.
 
                     vector<Value *> args = genArgsList(args_list);
-                    args.insert(args.begin(), genPrintf.const_ptr);
+                    ASSERT(!args.empty());
+                    Type *ty = args[0]->getType();
+                    if (ty->isIntegerTy()) {
+                        args.insert(args.begin(), genPrintf.const_ptr);
+                    } else if (ty->isFloatingPointTy()) {
+                        args.insert(args.begin(), genPrintf.const_ptr_f);
+                    } else {
+                        ty->dump();
+                        yyerror("unsupported writeln type");
+                    }
 
                     return Builder.CreateCall(CalleeF, args);
                 } else { //if(strcmp(sys_proc->attr.symbolName, "write")==0){
@@ -389,6 +407,7 @@ Code TreeNode::genCode() {
             case ROUTINE_PART: SHOW(ROUTINE_PART);
             case VAR_DECL_LIST: SHOW(VAR_DECL_LIST);
             case STMT_LIST: SHOW(STMT_LIST);
+            case TYPE_DECL_LIST: SHOW(TYPE_DECL_LIST);
                 for(auto ch: child)
                     ch->genCode();
                 return Code();
@@ -418,6 +437,12 @@ Code TreeNode::genCode() {
                                 getGlobalContext(),
                                 APInt(32, attr.value.integer, true)
                         );
+                    case TYPE_REAL:
+                        SHOW(TYPE_REAL);
+                        return ConstantFP::get(
+                            getGlobalContext(),
+                            APFloat(attr.value.real)
+                        );
                     default:
                         sprintf(buf, "Not implemented Symbol Type %d\n", symbolType);
                         yyerror(buf);
@@ -443,22 +468,43 @@ Code TreeNode::genCode() {
                 Value *lval, *rval;
                 ASSERT(lval = child[0]->genCode().getValue());
                 ASSERT(rval = child[1]->genCode().getValue());
-                switch (attr.op) {
-                    case OP_EQUAL: SHOW(OP_EQUAL);
-                        return Builder.CreateICmpEQ(lval, rval);
-                    case OP_PLUS: SHOW(OP_PLUS);
-                        return Builder.CreateAdd(lval, rval);
-                    case OP_MINUS: SHOW(OP_MINUS);
-                        return Builder.CreateSub(lval, rval);
-                    case OP_MUL: SHOW(OP_MUL);
-                        return Builder.CreateMul(lval, rval);
-                    case OP_GT: SHOW(OP_GT);
-                        return Builder.CreateICmpSGT(lval, rval);
-                    case OP_MOD: SHOW(OP_MOD);
-                        return Builder.CreateSRem(lval, rval);
-                    default:
-                        sprintf(buf, "OPKIND %d not implemented!", attr.op);
-                        yyerror(buf);
+                if(lval->getType()->isIntegerTy()){
+                    switch (attr.op) {
+                        case OP_EQUAL: SHOW(OP_EQUAL);
+                            return Builder.CreateICmpEQ(lval, rval);
+                        case OP_PLUS: SHOW(OP_PLUS);
+                            return Builder.CreateAdd(lval, rval);
+                        case OP_MINUS: SHOW(OP_MINUS);
+                            return Builder.CreateSub(lval, rval);
+                        case OP_MUL: SHOW(OP_MUL);
+                            return Builder.CreateMul(lval, rval);
+                        case OP_GT: SHOW(OP_GT);
+                            return Builder.CreateICmpSGT(lval, rval);
+                        case OP_MOD: SHOW(OP_MOD);
+                            return Builder.CreateSRem(lval, rval);
+                        default:
+                            sprintf(buf, "OPKIND %d not implemented!", attr.op);
+                            yyerror(buf);
+                    }
+                } else if(lval->getType()->isFloatingPointTy()){
+                    switch (attr.op) {
+                        case OP_EQUAL: SHOW(OP_EQUAL);
+                            return Builder.CreateFCmpOEQ(lval, rval);
+                        case OP_PLUS: SHOW(OP_PLUS);
+                            return Builder.CreateFAdd(lval, rval);
+                        case OP_MINUS: SHOW(OP_MINUS);
+                            return Builder.CreateFSub(lval, rval);
+                        case OP_MUL: SHOW(OP_MUL);
+                            return Builder.CreateFMul(lval, rval);
+                        case OP_GT: SHOW(OP_GT);
+                            return Builder.CreateFCmpOGT(lval, rval);
+                        default:
+                            sprintf(buf, "OPKIND %d not implemented!", attr.op);
+                            yyerror(buf);
+                    }
+                } else {
+                    lval->getType()->dump();
+                    yyerror("unsupported lvalue type!\n");
                 }
             case FUNCKIND: {
                 //NAME  LP  args_list(child[0])  RP
@@ -511,6 +557,7 @@ vector<Value *> genArgsList(TreeNode *argsList, bool enableVar){
 
 void Printf::init(){
     const_array = ConstantDataArray::getString(TheModule->getContext(), "%d\x0A", true);
+    const_array_f = ConstantDataArray::getString(TheModule->getContext(), "%f\x0A", true);
     ArrayType* ArrayTy = ArrayType::get(IntegerType::get(TheModule->getContext(), 8), 4);
     gvar_array__str = new GlobalVariable(
         /*Module=*/*TheModule,
@@ -521,6 +568,15 @@ void Printf::init(){
         /*Name=*/".str"
     );
     gvar_array__str->setAlignment(1);
+    gvar_array__str_f = new GlobalVariable(
+        /*Module=*/*TheModule,
+        /*Type=*/ArrayTy,
+        /*isConstant=*/true,
+        /*Linkage=*/GlobalValue::PrivateLinkage,
+        /*Initializer=*/const_array_f,
+        /*Name=*/".str_f"
+    );
+    gvar_array__str_f->setAlignment(1);
     PointerType* PointerTy =
         PointerType::get(IntegerType::get(TheModule->getContext(), 8), 0);
 
@@ -570,8 +626,8 @@ void Printf::init(){
     const_ptr_indices.push_back(const_int32_0);
     const_ptr_indices.push_back(const_int32_0);
     const_ptr = ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
-    const_ptr_to_str =
-        ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
+
+    const_ptr_f = ConstantExpr::getGetElementPtr(gvar_array__str_f, const_ptr_indices);
 }
 
 Value *genElemPointer(Value *name, Value *offset){
