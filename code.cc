@@ -213,17 +213,19 @@ Code TreeNode::genCode() {
                             //case TYPE_VOID:
                             case TYPE_INTEGER:
                                 DEBUG_INFO("generated TYPE_INTEGER\n");
-                                return Code(Type::getInt32Ty(getGlobalContext()));
+                                return Type::getInt32Ty(getGlobalContext());
                             case TYPE_BOOLEAN:
                                 DEBUG_INFO("generated TYPE_BOOLEAN\n");
-                                return Code(Type::getInt32Ty(getGlobalContext()));
+                                return Type::getInt32Ty(getGlobalContext());
                             case TYPE_REAL:
                                 DEBUG_INFO("generated TYPE_REAL\n");
-                                return Code(Type::getDoubleTy(getGlobalContext()));
+                                return Type::getDoubleTy(getGlobalContext());
                             case TYPE_CHARACTER:
                                 DEBUG_INFO("generated TYPE_CHARACTER\n");
-                                return Code(Type::getInt8Ty(getGlobalContext()));
-                            //case TYPE_STRING
+                                return Type::getInt8Ty(getGlobalContext());
+                            case TYPE_STRING:
+                                DEBUG_INFO("generated TYPE_STRING\n");
+                                return ArrayType::get(Type::getInt8Ty(getGlobalContext()), 256);
                             default: yyerror("Undefined sys type!");
                         }
                     }
@@ -291,7 +293,17 @@ Code TreeNode::genCode() {
                     case 1: {
                         DEBUG_INFO("name := exp\n");
                         // NAME ASSIGN expression($0)
-                        Builder.CreateStore(val, var);
+                        Type *ty = var->getType();
+                        ty->dump();
+                        if (ty->isPointerTy() && ty->getPointerElementType()->isArrayTy()) {
+                            vector<Value*> ptr_params;
+                            ptr_params.push_back(genElemPointer(var, genPrintf.const_int32_0));
+                            ptr_params.push_back(val);
+                            Builder.CreateCall(
+                                TheModule->getFunction("strcpy"),
+                                ptr_params
+                            );
+                        } else Builder.CreateStore(val, var);
                         return var;
                     }
                     case 2: {
@@ -494,6 +506,8 @@ Code TreeNode::genCode() {
                         args.insert(args.begin(), genPrintf.const_ptr);
                     } else if (ty->isFloatingPointTy()) {
                         args.insert(args.begin(), genPrintf.const_ptr_f);
+                    } else if (ty->isPointerTy()){
+                        args.insert(args.begin(), genPrintf.const_ptr_s);
                     } else {
                         ty->dump();
                         yyerror("unsupported writeln type");
@@ -548,6 +562,33 @@ Code TreeNode::genCode() {
                             getGlobalContext(),
                             APFloat(attr.value.real)
                         );
+                    case TYPE_STRING: {
+                        SHOW(TYPE_STRING);
+                        Constant *const_arr = ConstantDataArray::getString(
+                            TheModule->getContext(),
+                            attr.symbolName,
+                            true
+                        );
+                        ArrayType* ArrayTy = ArrayType::get(
+                            IntegerType::get(TheModule->getContext(), 8),
+                            strlen(attr.symbolName)+1
+                        );
+                        GlobalVariable *gvar_arr = new GlobalVariable(
+                            /*Module=*/*TheModule,
+                            /*Type=*/ArrayTy,
+                            /*isConstant=*/true,
+                            /*Linkage=*/GlobalValue::PrivateLinkage,
+                            /*Initializer=*/const_arr
+                        );
+                        gvar_arr->setAlignment(1);
+                        return genElemPointer(
+                            gvar_arr,
+                            ConstantInt::get(
+                                TheModule->getContext(),
+                                APInt(32, StringRef("0"), 10)
+                            )
+                        );
+                    }
                     default:
                         sprintf(buf, "Not implemented Symbol Type %d\n", symbolType);
                         yyerror(buf);
@@ -557,11 +598,13 @@ Code TreeNode::genCode() {
                 SHOW(NAMEKIND);
                 Value *name = getName(attr.symbolName).getValue();
                 switch(derivation){
-                    case 1: //NAME
-                        if (name->getType()->isPointerTy()) {
+                    case 1: { //NAME
+                        Type *ty = name->getType();
+                        if (ty->isPointerTy() && !ty->getPointerElementType()->isArrayTy()) {
                             name = Builder.CreateLoad(name, attr.symbolName);
                         }
-                        return name; 
+                        return name;
+                    }
                     case 9: //NAME LB expression($0) RB
                         return Builder.CreateLoad(
                             genElemPointer(name, child[0]->genCode().getValue()),
@@ -688,6 +731,7 @@ vector<Value *> genArgsList(TreeNode *argsList, bool enableVar){
 void Printf::init(){
     const_array = ConstantDataArray::getString(TheModule->getContext(), "%d\x0A", true);
     const_array_f = ConstantDataArray::getString(TheModule->getContext(), "%f\x0A", true);
+    const_array_s = ConstantDataArray::getString(TheModule->getContext(), "%s\x0A", true);
     ArrayType* ArrayTy = ArrayType::get(IntegerType::get(TheModule->getContext(), 8), 4);
     gvar_array__str = new GlobalVariable(
         /*Module=*/*TheModule,
@@ -707,6 +751,15 @@ void Printf::init(){
         /*Name=*/".str_f"
     );
     gvar_array__str_f->setAlignment(1);
+    gvar_array__str_s = new GlobalVariable(
+        /*Module=*/*TheModule,
+        /*Type=*/ArrayTy,
+        /*isConstant=*/true,
+        /*Linkage=*/GlobalValue::PrivateLinkage,
+        /*Initializer=*/const_array_s,
+        /*Name=*/".str_s"
+    );
+    gvar_array__str_s->setAlignment(1);
     PointerType* PointerTy =
         PointerType::get(IntegerType::get(TheModule->getContext(), 8), 0);
 
@@ -751,13 +804,49 @@ void Printf::init(){
     }
     func_printf->setAttributes(func_printf_PAL);
 
+    PointerType* PointerTy_6 = PointerType::get(
+        IntegerType::get(TheModule->getContext(), 8),
+        0
+    );
+
+    std::vector<Type*>FuncTy_8_args;
+    FuncTy_8_args.push_back(PointerTy_6);
+    FuncTy_8_args.push_back(PointerTy_6);
+    FunctionType* FuncTy_8 = FunctionType::get(
+     /*Result=*/PointerTy_6,
+     /*Params=*/FuncTy_8_args,
+     /*isVarArg=*/false
+    );
+
+    Function* func_strcpy = TheModule->getFunction("strcpy");
+    if (!func_strcpy) {
+        func_strcpy = Function::Create(
+            /*Type=*/FuncTy_8,
+            /*Linkage=*/GlobalValue::ExternalLinkage,
+            /*Name=*/"strcpy", TheModule); // (external, no body)
+            func_strcpy->setCallingConv(CallingConv::C);
+    }
+    AttributeSet func_strcpy_PAL;
+    {
+        SmallVector<AttributeSet, 4> Attrs;
+        AttributeSet PAS;
+        {
+            AttrBuilder B;
+            B.addAttribute(Attribute::NoUnwind);
+            PAS = AttributeSet::get(TheModule->getContext(), ~0U, B);
+        }
+        Attrs.push_back(PAS);
+        func_strcpy_PAL = AttributeSet::get(TheModule->getContext(), Attrs);
+    }
+    func_strcpy->setAttributes(func_strcpy_PAL);
+
     std::vector<Constant*> const_ptr_indices;
     const_int32_0 = ConstantInt::get(TheModule->getContext(), APInt(32, StringRef("0"), 10));
     const_ptr_indices.push_back(const_int32_0);
     const_ptr_indices.push_back(const_int32_0);
     const_ptr = ConstantExpr::getGetElementPtr(gvar_array__str, const_ptr_indices);
-
     const_ptr_f = ConstantExpr::getGetElementPtr(gvar_array__str_f, const_ptr_indices);
+    const_ptr_s = ConstantExpr::getGetElementPtr(gvar_array__str_s, const_ptr_indices);
 }
 
 Value *genElemPointer(Value *name, Value *offset){

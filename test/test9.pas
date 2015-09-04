@@ -11,7 +11,7 @@ type
 var
 	i : integer;
 	j : ar;
-	//str : string;
+	str : string;
 
 function add(a, b : integer) : integer;
 
@@ -39,6 +39,8 @@ begin
 	;
 	writeln(j.a);
 	writeln(cn);
+	str := 'A1';
+	writeln(str);
 {
 	case j.a % 4 of
 		0: str := 'A1';

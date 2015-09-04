@@ -104,10 +104,7 @@ const_value:
         $$->attr.value.character = $1->attr.symbolName[0];
     }
     |  STRING {
-        $$ = createTreeNodeConstant();
-        $$->symbolType = TYPE_STRING;
-        $$->attr.value.string = strAllocCopy($1->attr.symbolName);
-        strcpy($$->attr.value.string, $1->attr.symbolName);
+        $$ = $1;
     }
     |  SYS_CON {
         $$ = createTreeNodeConstant();

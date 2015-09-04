@@ -38,6 +38,7 @@ dotdot      ".."
 boolean     "boolean"
 char        "char"
 integer     "integer"
+string      "string"
 real        "real"
 array       "array"
 of          "of"
@@ -103,10 +104,13 @@ const_fp    [0-9]+"."[0-9]+
     while (1) {
         c = YYINPUT();
         if (c=='\'') break;
-        ++cnt;
+        buf[cnt++] = c;
     }
-    if (cnt>1) return STRING; //TODO
-    else return CHAR;
+    yylval = createTreeNodeConstant();
+    yylval->symbolType = TYPE_STRING;
+    buf[cnt]=0;
+    yylval->attr.symbolName = strAllocCopy(buf);
+    return STRING;
 }
 
 {dot}         {return DOT;}
@@ -121,6 +125,11 @@ const_fp    [0-9]+"."[0-9]+
 {lb}          {return LB;}
 {rb}          {return RB;}
 {dotdot}      {return DOTDOT;}
+{string} {
+    yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
+    yylval->symbolType = TYPE_STRING;
+    return SYS_TYPE;
+}
 {integer} {
     yylval = createTreeNodeStmt(SIMPLE_TYPE_DECL);
     yylval->symbolType = TYPE_INTEGER;
