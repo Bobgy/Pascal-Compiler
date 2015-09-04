@@ -79,7 +79,9 @@ procedure   "procedure"
 while       "while"
 not         "not"
 label       "label"
-word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
+name        [A-Za-z_][A-Za-z0-9_]*
+const_int   [0-9]+
+const_fp    [0-9]+"."[0-9]+
 
 %%
 
@@ -190,62 +192,23 @@ word        [A-Za-z0-9]+("."[A-Za-z0-9]+)*
 {while}       {return WHILE;}
 {not}         {return NOT;}
 {label}       {return LABEL;}
-{word} {
-    //figure whether it is ID/NAME/INTEGER/REAL
-    //fprintf(stderr, "word: %s\n", yytext);
-    int i;
-    int n = strlen(yytext);
-    if (isalpha(yytext[0]) || yytext[0]=='_') { //id name
-        int noDot = 1;
-        for (i = 0; i<n; ++i) {
-            if (yytext[i]=='.') {
-                noDot = 0;
-                break;
-            }
-        }
-        if (noDot) {
-            yylval = createTreeNodeConstant();
-            yylval->symbolType = TYPE_STRING;
-            yylval->attr.symbolName = strAllocCopy(yytext);
-            if (waitForFuncName) {
-                waitForFuncName = 0;
-            }
-            return NAME;
-        }
-    }
-    else { //integer real
-        if (isInteger(yytext)) {
-            int x;
-            sscanf(yytext, "%d", &x);
-            yylval = createTreeNodeConstant();
-            yylval->symbolType = TYPE_INTEGER;
-            yylval->attr.value.integer = x;
-            return INTEGER;
-        }
-        char a[256] = {0}, b[256] = {0};
-        int dot = -1;
-        for (i = 0; i<n; ++i) {
-            if (yytext[i]=='.' || yytext[i]=='e' || yytext[i]=='E')  {
-                dot = i;
-                break;
-            }
-            a[i] = yytext[i];
-            for (i = dot+1; i<n; ++i) {
-        }
-        if (dot>0 && dot!=n-1) {
-                b[i-dot-1] = yytext[i];
-            }
-            if (isInteger(a) && isInteger(b)) {
-                double x;
-                sscanf(yytext, "%lf", &x);
-                yylval = createTreeNodeConstant();
-                yylval->symbolType = TYPE_REAL;
-                yylval->attr.value.real = x;
-                return REAL;
-            }
-        }
-    }
-    ASSERT(0 && "LEX: no type found!");
+{name} {
+    yylval = createTreeNodeConstant();
+    yylval->symbolType = TYPE_STRING;
+    yylval->attr.symbolName = strAllocCopy(yytext);
+    return NAME;
+}
+{const_int} {
+    yylval = createTreeNodeConstant();
+    yylval->symbolType = TYPE_INTEGER;
+    sscanf(yytext, "%d", &yylval->attr.value.integer);
+    return INTEGER;
+}
+{const_fp} {
+    yylval = createTreeNodeConstant();
+    yylval->symbolType = TYPE_REAL;
+    sscanf(yytext, "%lf", &yylval->attr.value.real);
+    return REAL;
 }
 .|\n {
     //Other
