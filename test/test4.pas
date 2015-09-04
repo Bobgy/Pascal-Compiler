@@ -1,14 +1,14 @@
 program hello;
-var	
+var
 	f : integer;
 	k : integer;
 function go(var b : integer; a : integer): integer;
-var 
+var
 	fk : integer;
 	t : real;
 
 begin
-	if a > 0 then 
+	if a > 0 then
 	begin
 		go := a * go(b , a - 1);
 	end

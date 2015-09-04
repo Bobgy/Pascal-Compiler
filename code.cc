@@ -143,7 +143,7 @@ Code TreeNode::genCode() {
                 verifyFunction(*F);
 
                 // Optimize the function.
-                // TheFPM->run(*F); TODO
+                TheFPM->run(*F);
 
                 popFuncContext();
 
@@ -294,7 +294,6 @@ Code TreeNode::genCode() {
                         DEBUG_INFO("name := exp\n");
                         // NAME ASSIGN expression($0)
                         Type *ty = var->getType();
-                        ty->dump();
                         if (ty->isPointerTy() && ty->getPointerElementType()->isArrayTy()) {
                             vector<Value*> ptr_params;
                             ptr_params.push_back(genElemPointer(var, genPrintf.const_int32_0));
@@ -714,8 +713,8 @@ Code TreeNode::genCode() {
 Value *genArg(TreeNode *arg, bool enableVar=0){
     Value *val = arg->genCode().getValue();
     if (enableVar && arg->nodeKind == EXPKIND && arg->kind.expKind == NAMEKIND) {
-        StoreInst *inst = dynamic_cast<StoreInst *>(val);
-        if (inst) return inst->getValueOperand();
+        LoadInst *inst = dynamic_cast<LoadInst *>(val);
+        if (inst) return inst->getPointerOperand();
     }
     return val;
 }

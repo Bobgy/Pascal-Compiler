@@ -34,7 +34,7 @@ int yyparse();
 extern int yydebug;
 extern int debuginfo;
 #define DEBUG_INFO(x) do { if(debuginfo)yyinfo(x); } while(0)
-#define ASSERT(x) {if(!(x)){yyerror(#x);}}
+#define ASSERT(x) {if(!(x)){yyinfo("ASSERT Failed with ");yyerror(#x);}}
 
 void yyerror(const char *s);
 void yyinfo(const char *s);
