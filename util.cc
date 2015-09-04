@@ -18,11 +18,11 @@ void FuncContext::insertName(const string &name, Code code) {
     if(symbolTable.find(name) != symbolTable.end()){
         yyerror("The name has already been declared");
     }
-    yyinfo("inserting name: ");
-    yyinfo((char*)name.c_str());
-    yyinfo("\n");
+    DEBUG_INFO("inserting name: ");
+    DEBUG_INFO((char*)name.c_str());
+    DEBUG_INFO("\n");
     symbolTable[name] = code;
-    code.dump();
+    if (debuginfo) code.dump();
 }
 
 // This is a global helper function to get a name in the current context.
@@ -47,9 +47,9 @@ FuncContext *getFuncContext() {
 }
 
 void pushFuncContext(const char *func) {
-    yyinfo("Entering path: ");
-    yyinfo(func);
-    yyinfo("\n");
+    DEBUG_INFO("Entering path: ");
+    DEBUG_INFO(func);
+    DEBUG_INFO("\n");
 
     if (funcContext.empty()){
         funcContext.push(FuncContext(func, string(func)+"$"));
@@ -62,7 +62,7 @@ void pushFuncContext(const char *func) {
 }
 
 void popFuncContext() {
-    yyinfo("Leaving path\n");
+    DEBUG_INFO("Leaving path\n");
     funcContext.pop();
     if (!funcContext.empty()) {
         Builder.SetInsertPoint(
@@ -95,9 +95,9 @@ int BKDRhash(char *s)
 
 void insert(char* idName, size_t address, TreeNode* treeNode)
 {
-    yyinfo("Inserting \"");
-    yyinfo(idName);
-    yyinfo("\"\n");
+    DEBUG_INFO("Inserting \"");
+    DEBUG_INFO(idName);
+    DEBUG_INFO("\"\n");
     int index = BKDRhash(idName);
     for (; index != SYMBOL_TABLE_SIZE; ++index) {
         char *name = symbolTable[index].symbolName;
@@ -127,7 +127,7 @@ SymbolNode *lookup(char *idName)
         return symbolTable+index;
     } else {
         sprintf(buf, "Symbol \"%s\" not found\n", idName);
-        yyinfo(buf);
+        DEBUG_INFO(buf);
         return NULL;
     }
 }

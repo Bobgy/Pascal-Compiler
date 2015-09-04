@@ -75,9 +75,6 @@ int main()
 
     TheFPM = NULL;
 
-    // dump generated assembly code
-    TheModule->dump();
-
     error_code EC;
     raw_fd_ostream std_output("-", EC, sys::fs::F_None);
 

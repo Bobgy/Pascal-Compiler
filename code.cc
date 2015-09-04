@@ -13,7 +13,7 @@ Code TreeNode::genCode() {
                 SHOW(TYPE_DEFINITION);
                 TreeNode *type_decl = child[0];
                 Type *ty = type_decl->genCode().getType();
-                ty->dump();
+                if (debuginfo) ty->dump();
                 getFuncContext()->insertName(attr.symbolName, ty);
                 return ty;
             }
@@ -89,9 +89,9 @@ Code TreeNode::genCode() {
                 AI = F->arg_begin();
                 for (unsigned i = 0; i < args.size(); ++i, ++AI) {
                     // Create an alloca for this variable.
-                    yyinfo("VAR ");
-                    yyinfo(names[i].c_str());
-                    yyinfo("\n");
+                    DEBUG_INFO("VAR ");
+                    DEBUG_INFO(names[i].c_str());
+                    DEBUG_INFO("\n");
                     if(isVar[i]){
                         Value *var = AI;
                         getFuncContext()->insertName(names[i].c_str(), var);
