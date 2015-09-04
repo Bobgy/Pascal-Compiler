@@ -12,6 +12,7 @@ Code TreeNode::genCode() {
             case TYPE_DEFINITION: {
                 SHOW(TYPE_DEFINITION);
                 TreeNode *type_decl = child[0];
+                type_decl->attr.symbolName = attr.symbolName;
                 Type *ty = type_decl->genCode().getType();
                 if (debuginfo) ty->dump();
                 getFuncContext()->insertName(attr.symbolName, ty);
@@ -170,7 +171,7 @@ Code TreeNode::genCode() {
                             NULL, // initializer set later
                             name->attr.symbolName
                         );
-                        if(type->isArrayTy()){
+                        if(type->isArrayTy() || type->isStructTy()){
                             ConstantAggregateZero* const_array;
                             const_array = ConstantAggregateZero::get(type);
                             gvar->setInitializer(const_array);
@@ -244,6 +245,35 @@ Code TreeNode::genCode() {
                 return ArrayTy;
             }
 
+            case RECORD_TYPE_DECL: {
+                SHOW(RECORD_TYPE_DECL);
+                //RECORD  field_decl_list($0)  END
+                //child = {field_decl1, field_decl2, ...}
+                int id = 0;
+                vector<Type *> fields;
+                map<string, int> &fieldID = globalFuncContext->recType[attr.symbolName];
+                for (auto field: child){
+                    //name_list($0)  COLON  type_decl($1)  SEMI
+                    TreeNode *name_list = field->child[0],
+                             *type_decl = field->child[1];
+                    Type *ty = type_decl->genCode().getType();
+                    for (auto name: name_list->child) {
+                        fields.push_back(ty);
+                        fieldID[name->attr.symbolName] = id++;
+                    }
+                }
+                StructType *StructTy = TheModule->getTypeByName(attr.symbolName);
+                ASSERT(!StructTy);
+
+                sprintf(buf, "New struct %s!\n", attr.symbolName);
+                DEBUG_INFO(buf);
+
+                ASSERT(StructTy = StructType::create(TheModule->getContext(), attr.symbolName));
+                StructTy->setBody(fields, /*isPacked=*/false);
+                return StructTy;
+            }
+
+
             case ASSIGN_STMT: {
                 SHOW(ASSIGN_STMT);
                 TreeNode *exprVal = child[0];
@@ -251,15 +281,26 @@ Code TreeNode::genCode() {
                 Value *val = exprVal->genCode().getValue();
                 switch (derivation) {
                     case 1: {
+                        DEBUG_INFO("name := exp\n");
                         // NAME ASSIGN expression($0)
                         Builder.CreateStore(val, var);
                         return var;
                     }
                     case 2: {
+                        DEBUG_INFO("name[exp] := exp\n");
                         // NAME LB expression RB ASSIGN expression($0)
                         TreeNode *exprIdx = child[1];
                         ASSERT(var->getType()->isPointerTy());
                         Value *ptr = genElemPointer(var, exprIdx->genCode().getValue());
+                        Builder.CreateStore(val, ptr);
+                        return ptr;
+                    }
+                    case 3: {
+                        DEBUG_INFO("name.name := exp\n");
+                        // NAME  DOT  NAME($1)  ASSIGN  expression($0)
+                        TreeNode *expr  = child[0],
+                                 *field = child[1];
+                        Value *ptr = getRecFieldPointer(var, field->attr.symbolName);
                         Builder.CreateStore(val, ptr);
                         return ptr;
                     }
@@ -459,6 +500,13 @@ Code TreeNode::genCode() {
                             genElemPointer(name, child[0]->genCode().getValue()),
                             attr.symbolName
                         );
+                    case 10: // NAME  DOT  NAME($0)
+                        return Builder.CreateLoad(
+                            getRecFieldPointer(
+                                name,
+                                child[0]->attr.symbolName
+                            )
+                        );
                     default:
                         sprintf(buf, "Not implemented derivation %d for NAMEKIND", derivation);
                         yyerror(buf);
@@ -641,6 +689,18 @@ Value *genElemPointer(Value *name, Value *offset){
     Value* ptr;
     ASSERT(ptr = Builder.CreateGEP(name, ptr_indices));
     return ptr;
+}
+
+Value *getRecFieldPointer(Value *var, const char *field){
+    ASSERT(var->getType()->isPointerTy());
+    Type *recType = var->getType()->getPointerElementType();
+    const char *typeName = recType->getStructName().data();
+    int fieldID = globalFuncContext->recType[typeName][field];
+    Value *const_id = ConstantInt::get(
+        getGlobalContext(),
+        APInt(32, fieldID, true)
+    );
+    return genElemPointer(var, const_id);
 }
 
 Printf genPrintf;

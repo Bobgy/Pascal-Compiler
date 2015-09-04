@@ -6,6 +6,7 @@ class FuncContext {
 private:
     map<string, Code> symbolTable;
 public:
+    map<string, map<string, int> > recType;
     string funcName, path;
     FuncContext(const string &name, const string &path): funcName(name), path(path) {
         // do nothing

@@ -187,6 +187,8 @@ TreeNode *createTreeNodeExp(Expression T)
             p->attr.size = T.size;
             break;
         case RECORDKIND:
+            p->attr.symbolName = strAllocCopy(T.symbolName);
+            p->symbolType = T.symbolType;
             break;
         default:
             yyerror("T.expKind not found.");

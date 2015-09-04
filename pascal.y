@@ -203,17 +203,18 @@ record_type_decl:
 ;
 field_decl_list:
     field_decl_list  field_decl {
-        $$ = $2;
-        $$->child = {$1};
+        $$ = $1;
+        $$->child.push_back($2);
     }
     | field_decl {
-        $$ = $1;
+        $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
+        $$->child = {$1};
     }
 ;
 field_decl:
     name_list  COLON  type_decl  SEMI {
-        $$ = createTreeNodeStmt(RECORD_TYPE_DECL);
-        $$->symbolType = $3->symbolType;
+        $$ = createTreeNodeStmt(FIELD_DECL);
+        $$->child = {$1, $3};
     }
 ;
 name_list:
@@ -634,8 +635,12 @@ factor:
         $$->derivation = 9;
     }
     |  NAME  DOT  NAME {
-        $$ = createTreeNodeExp(NULL_EXP); //OPKIND,"",OP_DOT
-        //memcpy($$->child,lookup($1->attr.symbolName),sizeof(TreeNode));
+        Expression expArgs;
+        expArgs.expKind = NAMEKIND;
+        expArgs.symbolName = $1->attr.symbolName;
+        $$ = createTreeNodeExp(expArgs);
+        $$->child = {$3};
+        $$->derivation = 10;
     }
 ;
 args_list: //$$->child = {exp, exp, exp, ...}

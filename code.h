@@ -1,6 +1,7 @@
 #include "util.h"
 vector<Value *> genArgsList(TreeNode *argsList, bool enableVar=0);
 Value *genElemPointer(Value *name, Value *offset);
+Value *getRecFieldPointer(Value *var, const char *field);
 void init_sys_func();
 class Printf{
 private:
