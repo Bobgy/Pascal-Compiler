@@ -6,7 +6,7 @@ const
 type
 	ar=record
 		a : integer;
-		b :integer;
+		b : integer;
 	end;
 var
 	i : integer;
@@ -27,7 +27,6 @@ begin
 	end
 	;
 	writeln(j.a);
-{
 	while i > 5 do begin
 		j.a := add(j.a , j.a);
 		i := i - 1;
@@ -39,6 +38,7 @@ begin
 	until j.a < 100
 	;
 	writeln(j.a);
+{
 	case j.a % 4 of
 		0: str := 'A1';
 		1: str := 'B2';
@@ -46,12 +46,12 @@ begin
 		3: str := 'D4';
 	end
 	;
+}
 	if j.a >= 0 then begin
 		j.a := j.a + 1;
 	end
 	;
 	writeln(j.a);
-	writeln(str);
-}
+	//writeln(str);
 end
 .

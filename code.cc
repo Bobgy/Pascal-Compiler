@@ -319,12 +319,12 @@ Code TreeNode::genCode() {
                 Value *stop = stopVal->genCode().getValue();
 
                 Function *F = Builder.GetInsertBlock()->getParent();
-                BasicBlock *ForCondBB = BasicBlock::Create(getGlobalContext(), "for_cond", F);
-                BasicBlock *ForBodyBB = BasicBlock::Create(getGlobalContext(), "for_body");
-                BasicBlock *ForContBB = BasicBlock::Create(getGlobalContext(), "for_cont");
+                BasicBlock *CondBB = BasicBlock::Create(getGlobalContext(), "for_cond", F);
+                BasicBlock *BodyBB = BasicBlock::Create(getGlobalContext(), "for_body");
+                BasicBlock *ContBB = BasicBlock::Create(getGlobalContext(), "for_cont");
 
-                Builder.CreateBr(ForCondBB);
-                Builder.SetInsertPoint(ForCondBB);
+                Builder.CreateBr(CondBB);
+                Builder.SetInsertPoint(CondBB);
                 Value *CondV, *varVal = Builder.CreateLoad(var);
                 bool up;
                 switch(direction->derivation) {
@@ -340,10 +340,10 @@ Code TreeNode::genCode() {
                         sprintf(buf, "Invalid direction->derivation: %d\n", direction->derivation);
                         yyerror(buf);
                 }
-                Builder.CreateCondBr(CondV, ForBodyBB, ForContBB);
+                Builder.CreateCondBr(CondV, BodyBB, ContBB);
 
-                F->getBasicBlockList().push_back(ForBodyBB);
-                Builder.SetInsertPoint(ForBodyBB);
+                F->getBasicBlockList().push_back(BodyBB);
+                Builder.SetInsertPoint(BodyBB);
                 stmt->genCode();
                 Value *const_1 = ConstantInt::get(
                         getGlobalContext(),
@@ -357,11 +357,66 @@ Code TreeNode::genCode() {
                     Value *nextVal = Builder.CreateSub(varVal, const_1);
                     Builder.CreateStore(nextVal, var);
                 }
-                Builder.CreateBr(ForCondBB);
-                ForBodyBB = Builder.GetInsertBlock();
+                Builder.CreateBr(CondBB);
+                BodyBB = Builder.GetInsertBlock();
 
-                F->getBasicBlockList().push_back(ForContBB);
-                Builder.SetInsertPoint(ForContBB);
+                F->getBasicBlockList().push_back(ContBB);
+                Builder.SetInsertPoint(ContBB);
+
+                return Code();
+            }
+
+            case WHILE_STMT: {
+                //WHILE  expression($0)  DO stmt($1)
+                TreeNode *cond = child[0],
+                         *stmt = child[1];
+
+                Function *F = Builder.GetInsertBlock()->getParent();
+                BasicBlock *CondBB = BasicBlock::Create(getGlobalContext(), "while_cond", F);
+                BasicBlock *BodyBB = BasicBlock::Create(getGlobalContext(), "while_body");
+                BasicBlock *ContBB = BasicBlock::Create(getGlobalContext(), "while_cont");
+
+                Builder.CreateBr(CondBB);
+                Builder.SetInsertPoint(CondBB);
+                Value *CondV = cond->genCode().getValue();
+                if (CondV->getType()->isPointerTy()) {
+                    CondV = Builder.CreateLoad(CondV);
+                }
+                Builder.CreateCondBr(CondV, BodyBB, ContBB);
+
+                F->getBasicBlockList().push_back(BodyBB);
+                Builder.SetInsertPoint(BodyBB);
+                stmt->genCode();
+                Builder.CreateBr(CondBB);
+                BodyBB = Builder.GetInsertBlock();
+
+                F->getBasicBlockList().push_back(ContBB);
+                Builder.SetInsertPoint(ContBB);
+
+                return Code();
+            }
+
+            case REPEAT_STMT: {
+                //REPEAT  stmt_list($0)  UNTIL  expression($1)
+                TreeNode *cond = child[1],
+                         *stmt = child[0];
+
+                Function *F = Builder.GetInsertBlock()->getParent();
+                BasicBlock *BodyBB = BasicBlock::Create(getGlobalContext(), "repeat_body", F);
+                BasicBlock *ContBB = BasicBlock::Create(getGlobalContext(), "repeat_cont");
+
+                Builder.CreateBr(BodyBB);
+                Builder.SetInsertPoint(BodyBB);
+                stmt->genCode();
+                Value *CondV = cond->genCode().getValue();
+                if (CondV->getType()->isPointerTy()) {
+                    CondV = Builder.CreateLoad(CondV);
+                }
+                Builder.CreateCondBr(CondV, ContBB, BodyBB);
+                BodyBB = Builder.GetInsertBlock();
+
+                F->getBasicBlockList().push_back(ContBB);
+                Builder.SetInsertPoint(ContBB);
 
                 return Code();
             }
@@ -530,6 +585,12 @@ Code TreeNode::genCode() {
                             return Builder.CreateICmpSGT(lval, rval);
                         case OP_MOD: SHOW(OP_MOD);
                             return Builder.CreateSRem(lval, rval);
+                        case OP_DIV: SHOW(OP_DIV);
+                            return Builder.CreateSDiv(lval, rval);
+                        case OP_LT: SHOW(OP_LT);
+                            return Builder.CreateICmpSLT(lval, rval);
+                        case OP_GE: SHOW(OP_GE);
+                            return Builder.CreateICmpSGE(lval, rval);
                         default:
                             sprintf(buf, "OPKIND %d not implemented!", attr.op);
                             yyerror(buf);
@@ -546,6 +607,12 @@ Code TreeNode::genCode() {
                             return Builder.CreateFMul(lval, rval);
                         case OP_GT: SHOW(OP_GT);
                             return Builder.CreateFCmpOGT(lval, rval);
+                        case OP_DIV: SHOW(OP_DIV);
+                            return Builder.CreateFDiv(lval, rval);
+                        case OP_LT: SHOW(OP_LT);
+                            return Builder.CreateFCmpOLT(lval, rval);
+                        case OP_GE: SHOW(OP_GE);
+                            return Builder.CreateFCmpOGE(lval, rval);
                         default:
                             sprintf(buf, "OPKIND %d not implemented!", attr.op);
                             yyerror(buf);
@@ -590,9 +657,12 @@ Code TreeNode::genCode() {
 }
 
 Value *genArg(TreeNode *arg, bool enableVar=0){
+    Value *val = arg->genCode().getValue();
     if (enableVar && arg->nodeKind == EXPKIND && arg->kind.expKind == NAMEKIND) {
-        return getName(arg->attr.symbolName).getValue();
-    } else return arg->genCode().getValue();
+        StoreInst *inst = dynamic_cast<StoreInst *>(val);
+        if (inst) return inst->getValueOperand();
+    }
+    return val;
 }
 
 vector<Value *> genArgsList(TreeNode *argsList, bool enableVar){

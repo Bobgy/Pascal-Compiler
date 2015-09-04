@@ -455,14 +455,16 @@ else_clause:
         $$ = createTreeNodeStmt(ELSE_CLAUSE);
     }
 ;
-repeat_stmt: REPEAT  stmt_list  UNTIL  expression {
-                $$ = createTreeNodeStmt(REPEAT_STMT);
-                $$->child = {$2, $4};
-            };
-while_stmt: WHILE  expression  DO stmt {
-                $$ = createTreeNodeStmt(WHILE_STMT);
-                $$->child = {$2};
-            };
+repeat_stmt:
+    REPEAT  stmt_list  UNTIL  expression {
+        $$ = createTreeNodeStmt(REPEAT_STMT);
+        $$->child = {$2, $4};
+    };
+while_stmt:
+    WHILE  expression  DO stmt {
+        $$ = createTreeNodeStmt(WHILE_STMT);
+        $$->child = {$2, $4};
+    };
 for_stmt:
     FOR  NAME  ASSIGN  expression  direction  expression  DO stmt {
         $$ = createTreeNodeStmt(FOR_STMT);
