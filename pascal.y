@@ -410,10 +410,8 @@ assign_stmt:
     };
 proc_stmt:
     NAME {
-        Expression expArgs;
-        expArgs.expKind = NAMEKIND;
-        expArgs.symbolName = $1->attr.symbolName;
-        $$ = createTreeNodeExp(expArgs);
+        $$ = createTreeNodeStmt(PROC_STMT);
+        $$->attr.symbolName = strAllocCopy($1->attr.symbolName);
         $$->derivation = 1;
     }
     |  NAME  LP  args_list  RP {

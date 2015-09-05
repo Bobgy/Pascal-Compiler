@@ -521,35 +521,47 @@ Code TreeNode::genCode() {
             }
 
             case PROC_STMT: {
-                //SYS_PROC(child[0])  LP  args_list(child[1])  RP
                 SHOW(PROC_STMT);
-                TreeNode *sys_proc  = child[0],
-                         *args_list = child[1];
-
-                if(strcmp(sys_proc->attr.symbolName, "writeln")==0){
-                    Function *CalleeF;
-                    ASSERT(CalleeF  = TheModule->getFunction("printf"));
-
-                    // If argument mismatch error.
-
-                    vector<Value *> args = genArgsList(args_list);
-                    ASSERT(!args.empty());
-                    Type *ty = args[0]->getType();
-                    if (ty->isIntegerTy()) {
-                        args.insert(args.begin(), genPrintf.const_ptr);
-                    } else if (ty->isFloatingPointTy()) {
-                        args.insert(args.begin(), genPrintf.const_ptr_f);
-                    } else if (ty->isPointerTy()){
-                        args.insert(args.begin(), genPrintf.const_ptr_s);
-                    } else {
-                        ty->dump();
-                        yyerror("unsupported writeln type");
+                switch(derivation) {
+                    case 1: {
+                        //NAME
+                        Function *F;
+                        ASSERT(F = TheModule->getFunction(attr.symbolName));
+                        vector<Value *> args;
+                        Builder.CreateCall(F, args);
+                        return Code();
                     }
+                    case 4: {
+                        //SYS_PROC(child[0])  LP  args_list(child[1])  RP
+                        TreeNode *sys_proc  = child[0],
+                                 *args_list = child[1];
 
-                    return Builder.CreateCall(CalleeF, args);
-                } else { //if(strcmp(sys_proc->attr.symbolName, "write")==0){
-                    sprintf(buf, "Not implemented %s!", sys_proc->attr.symbolName);
-                    yyerror(buf);
+                        if(strcmp(sys_proc->attr.symbolName, "writeln")==0){
+                            Function *CalleeF;
+                            ASSERT(CalleeF  = TheModule->getFunction("printf"));
+
+                            // If argument mismatch error.
+
+                            vector<Value *> args = genArgsList(args_list);
+                            ASSERT(!args.empty());
+                            Type *ty = args[0]->getType();
+                            if (ty->isIntegerTy()) {
+                                args.insert(args.begin(), genPrintf.const_ptr);
+                            } else if (ty->isFloatingPointTy()) {
+                                args.insert(args.begin(), genPrintf.const_ptr_f);
+                            } else if (ty->isPointerTy()) {
+                                args.insert(args.begin(), genPrintf.const_ptr_s);
+                            } else {
+                                ty->dump();
+                                yyerror("unsupported writeln type");
+                            }
+
+                            return Builder.CreateCall(CalleeF, args);
+                        } else { //if(strcmp(sys_proc->attr.symbolName, "write")==0){
+                            sprintf(buf, "Not implemented %s!", sys_proc->attr.symbolName);
+                            yyerror(buf);
+                        }
+                    }
                 }
             }
 
