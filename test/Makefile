@@ -1,4 +1,4 @@
-TARGET := test2.ll  test5.ll test6.ll test7.ll test8.ll test9.ll test4.ll test1.ll
+TARGET := test1.ll test2.ll test4.ll test5.ll test6.ll test7.ll test8.ll
 
 all: $(TARGET)
 

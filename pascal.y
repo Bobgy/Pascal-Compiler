@@ -475,27 +475,33 @@ direction:
         $$->derivation = 2;
     }
 ;
-case_stmt:     CASE expression OF case_expr_list  END {
-                $$ = createTreeNodeStmt(CASE_STMT);
-                $$->child = {$2, $4};
-            };
-case_expr_list: case_expr_list  case_expr {
-                    $$ = createTreeNodeStmt(CASE_EXPR_LIST);
-                    $$->child = {$1, $2};
-                }
-                | case_expr {
-                    $$ = createTreeNodeStmt(CASE_EXPR_LIST);
-                    $$->child = {$1};
-                }
+case_stmt:
+    CASE expression OF case_expr_list  END {
+        $$ = createTreeNodeStmt(CASE_STMT);
+        $$->child = {$2, $4};
+    }
 ;
-case_expr:     const_value  COLON  stmt  SEMI {
-                $$ = createTreeNodeStmt(CASE_EXPR);
-                $$->child = {$1, $3, $4};
-            }
-              |  NAME  COLON  stmt  SEMI {
-                  $$ = createTreeNodeStmt(CASE_EXPR);
-                $$->child = {$3};
-              }
+case_expr_list:
+    case_expr_list  case_expr {
+        $$ = $1;
+        $$->child.push_back($2);
+    }
+    | case_expr {
+        $$ = createTreeNodeStmt(CASE_EXPR_LIST);
+        $$->child = {$1};
+    }
+;
+case_expr:
+    const_value  COLON  stmt  SEMI {
+        $$ = createTreeNodeStmt(CASE_EXPR);
+        $$->child = {$1, $3};
+        $$->derivation = 1;
+    }
+    |  NAME  COLON  stmt  SEMI {
+        $$ = createTreeNodeStmt(CASE_EXPR);
+        $$->child = {$1, $3};
+        $$->derivation = 2;
+    }
 ;
 goto_stmt: GOTO  INTEGER // just skipped
 ;

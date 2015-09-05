@@ -440,6 +440,40 @@ Code TreeNode::genCode() {
                 return Code();
             }
 
+            case CASE_STMT: {
+                // CASE expression($0) OF case_expr_list($1)  END
+                SHOW(CASE_STMT);
+                TreeNode *expr      = child[0],
+                         *case_list = child[1];
+
+                BasicBlock *ContBB = BasicBlock::Create(getGlobalContext(), "switch_cont");
+                SwitchInst* swi = Builder.CreateSwitch(
+                    expr->genCode().getValue(),
+                    ContBB,
+                    case_list->child.size()
+                );
+                Function *F = Builder.GetInsertBlock()->getParent();
+                for (auto cs: case_list->child) {
+                    BasicBlock *CaseBB = BasicBlock::Create(getGlobalContext(), "case");
+                    F->getBasicBlockList().push_back(CaseBB);
+                    Value *val;
+                    switch(cs->derivation) {
+                        case 1: val = cs->child[0]->genCode().getValue(); break;
+                        case 2: val = getName(cs->child[0]->attr.symbolName).getValue(); break;
+                        default: ASSERT(0 && "case_list->derivation not found");
+                    }
+                    ConstantInt *const_int;
+                    ASSERT(const_int = dynamic_cast<ConstantInt *>(val));
+                    swi->addCase(const_int, CaseBB);
+                    Builder.SetInsertPoint(CaseBB);
+                    cs->child[1]->genCode();
+                    Builder.CreateBr(ContBB);
+                }
+                F->getBasicBlockList().push_back(ContBB);
+                Builder.SetInsertPoint(ContBB);
+                return Code();
+            }
+
             //if_stmt: IF  expression  THEN  stmt  else_clause
             case IF_STMT: {
                 //$$->child = {expression, stmt, else_clause}

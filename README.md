@@ -6,6 +6,7 @@
 - 龚源   3120000381
 
 ## Current status
+- test1 passed
 - test2 passed
 - test4 passed
 - test5 passed
