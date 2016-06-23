@@ -4,7 +4,6 @@
 #include <stdio.h>
 YYSTYPE yylval;
 FuncContext *globalFuncContext;
-SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 Module *TheModule;
 IRBuilder<> Builder(getGlobalContext());
 FunctionPassManager *TheFPM;

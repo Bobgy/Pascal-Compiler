@@ -6,7 +6,6 @@
 extern int yydebug;
 int debuginfo;
 
-SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
 TreeNode *syntaxTreeRoot;
 FuncContext *globalFuncContext;
 

@@ -185,17 +185,6 @@ extern IRBuilder<> Builder;
 extern map<string, AllocaInst *> NamedValues;
 extern FunctionPassManager *TheFPM;
 
-// symbol table
-#define SYMBOL_TABLE_SIZE 1000007
-#define HASH_SEED 9875321
-typedef struct symbolNode {
-    char* symbolName;
-    size_t address; // store runtime address
-    TreeNode *treeNode; // id on tree
-} SymbolNode;
-
-extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
-
 #ifndef YYSTYPE_IS_DECLARED
     #define YYSTYPE_IS_DECLARED 1
     typedef TreeNode *YYSTYPE;

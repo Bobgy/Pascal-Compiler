@@ -1,9 +1,9 @@
 LEX_TARGET := lex.yy
 YACC_TARGET := y.tab
 COMMON_HEADER := global.h util.h code.h
-CC := clang++
-LLVM_C_OP := `llvm-config --cxxflags`
-LLVM_LD_OP := `llvm-config --ldflags --system-libs --libs core mcjit native`
+CC := clang++-3.6
+LLVM_C_OP := `llvm-config-3.6 --cxxflags`
+LLVM_LD_OP := `llvm-config-3.6 --ldflags --system-libs --libs core mcjit native`
 NO_WARNING := -Wno-write-strings -Wno-deprecated-register
 COP := -std=c++11 $(LLVM_C_OP) -O3 $(NO_WARNING)
 

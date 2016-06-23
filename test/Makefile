@@ -5,7 +5,7 @@ all: $(TARGET)
 %.ll: %.pas ../y.tab.out Makefile
 	@echo -n "Testing $@ -- "
 	@../y.tab.out < $< > $@ || rm $@
-	@lli $@ > tmp || diff tmp $@.ans
+	@lli-3.6 $@ > tmp || diff tmp $@.ans
 	@rm tmp
 	@echo "Passed"
 	@rm $@
