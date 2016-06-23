@@ -68,3 +68,12 @@ Run all test cases
 cd test
 make
 ```
+
+Compile to masm and executable file
+```
+cd test
+../y.tab.out < test1.pas > test1.ll
+llc-3.6 test1.ll
+clang-3.6 test1.s -o test1.out
+./test1.out
+```
