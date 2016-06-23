@@ -2,6 +2,7 @@
 
 ## team member:
 - 王力宁 3120000405
+- 王睿   3120000305
 - 朱稼乐 3120000346
 - 龚源   3120000381
 
@@ -19,11 +20,11 @@
 You need to compile this project in Linux. The following instructions are for Ubuntu.
 
 ### dependencies
-- yacc
-- flex
-- clang && llvm
+- yacc(bison)
+- lex(flex)
+- clang-3.6 && llvm-3.6
 - python (a python script is used to test lex)
-- libedit-dev may be needed if you encounter compilation errors (`sudo apt-get install libedit-dev` in ubuntu)
+- libedit-dev may be needed if you encounter compilation errors (`sudo apt-get install libedit-dev zlib1g-dev` in ubuntu)
 
 ### instructions
 
@@ -52,12 +53,18 @@ Setting YYDEBUG environment variable to 1 will enable debug info.
 $> export YYDEBUG=1
 ```
 
-Compile a pas file to llvm assembly. (Not yet finished, only has the most limited functionality.)
+Compile a pas file to llvm assembly.
 ```
-./run.bash
+./y.tab.out < test/test1.pas > path/to/llvm_assembly_file.ll
 ```
 
 Run llvm assembly directly
 ```
 lli path/to/llvm_assembly_file.ll
+```
+
+Run all test cases
+```
+cd test
+make
 ```
