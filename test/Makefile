@@ -11,4 +11,4 @@ all: $(TARGET)
 	@rm $@
 
 clean:
-	rm -f *.ll
+	rm -f *.ll *~

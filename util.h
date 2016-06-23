@@ -57,8 +57,6 @@ struct Expression {
 };
 TreeNode *createTreeNodeExp(Expression);
 int BKDRhash(char *s);
-void insert(char*, size_t, TreeNode*);
-SymbolNode *lookup(char*);
 
 //allocate space for an empty string
 char *strAlloc(int num);

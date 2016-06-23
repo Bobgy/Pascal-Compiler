@@ -96,45 +96,6 @@ int BKDRhash(char *s)
     return res % SYMBOL_TABLE_SIZE;
 }
 
-void insert(char* idName, size_t address, TreeNode* treeNode)
-{
-    DEBUG_INFO("Inserting \"");
-    DEBUG_INFO(idName);
-    DEBUG_INFO("\"\n");
-    int index = BKDRhash(idName);
-    for (; index != SYMBOL_TABLE_SIZE; ++index) {
-        char *name = symbolTable[index].symbolName;
-        if (symbolTable[index].symbolName==NULL) break;
-        else if (strcmp(name, idName)==0) {
-            sprintf(buf, "%s redeclared!\n", name);
-            yyerror(buf);
-        }
-    }
-    symbolTable[index].symbolName = strAllocCopy(idName);
-    symbolTable[index].address = address;
-    symbolTable[index].treeNode = treeNode;
-}
-
-SymbolNode *lookup(char *idName)
-{
-    int index = BKDRhash(idName);
-    int found = 0;
-    for (; index!=SYMBOL_TABLE_SIZE; ++index) {
-        if (symbolTable[index].symbolName==NULL) break; // not found
-        if (strcmp(symbolTable[index].symbolName,idName)==0) {
-            found = 1;
-            break;
-        }
-    }
-    if (found) {
-        return symbolTable+index;
-    } else {
-        sprintf(buf, "Symbol \"%s\" not found\n", idName);
-        DEBUG_INFO(buf);
-        return NULL;
-    }
-}
-
 TreeNode *createTreeNodeStmt(StmtType stmtType)
 {
     TreeNode *p = new TreeNode;

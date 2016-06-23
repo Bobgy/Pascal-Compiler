@@ -165,7 +165,6 @@ struct TreeNode {
         SymbolValue value; // constant, remember check symbolType first
         char* symbolName; // symbol name, type name, function/procedure name
         int size; // array size
-        string assembly; //generated assembly, NULL means no code
     } attr;
     SymbolType symbolType;
     Code genCode();
@@ -190,8 +189,7 @@ extern FunctionPassManager *TheFPM;
 #define HASH_SEED 9875321
 typedef struct symbolNode {
     char* symbolName;
-    size_t address; // store runtime address
-    TreeNode *treeNode; // id on tree
+    TreeNode *treeNode; // definition tree node
 } SymbolNode;
 
 extern SymbolNode symbolTable[SYMBOL_TABLE_SIZE];
