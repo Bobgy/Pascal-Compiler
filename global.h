@@ -165,7 +165,6 @@ struct TreeNode {
         SymbolValue value; // constant, remember check symbolType first
         char* symbolName; // symbol name, type name, function/procedure name
         int size; // array size
-        string assembly; //generated assembly, NULL means no code
     } attr;
     SymbolType symbolType;
     Code genCode();
