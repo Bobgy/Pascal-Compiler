@@ -1,10 +1,10 @@
 # Pascal Compiler for ZJU course project
 
 ## team member:
-- 王力宁 3120000405
-- 王睿   3120000305
-- 朱稼乐 3120000346
-- 龚源   3120000381
+- 王力宁
+- 王睿
+- 朱稼乐
+- 龚源
 
 ## Current status
 - test1 passed
